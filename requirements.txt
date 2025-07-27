@@ -1,0 +1,11 @@
+uvicorn
+uvicorn[standard]
+fastapi
+termcolor
+
+transformers
+ctranslate2
+
+blingfire
+pysbd
+

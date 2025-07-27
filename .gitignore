@@ -1,0 +1,11 @@
+.idea
+*.iws
+*.iml
+*.ipr
+
+cache.db
+
+/.idea/
+/options/
+/models/
+venv

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>LLM translate</title>
+    <script type="application/javascript" src="index.js"></script>
+    <link rel="stylesheet" href="chota.min.css">
+    <style>
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #2a82b6; /* Blue */
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            animation: spin 2s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<div id="top" class="container" role="document">
+    <div class="row">
+        <div class="col">
+            <h5>LLM Translate</h5>
+        </div>
+        <div class="col">
+            <span id="errorText" class="text-error"></span>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <select name="from_lang" id="from_lang_select"></select>
+                </div>
+                <div class="col">
+                    <button id="trigger" class="button primary icon" type="submit">
+                        &nbspTranslate&nbsp<div id="progress" class="loader" style="display: none;"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <select name="to_lang" id="to_lang_select"></select>
+                </div>
+                <div class="col">
+                    <input id="plugin" value="" placeholder="Use translator plugin (optional)"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <textarea id="text" rows="20"></textarea>
+        </div>
+        <div class="col" aria-busy="true">
+            <textarea id="text_result" rows="20" ></textarea>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
