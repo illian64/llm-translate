@@ -22,8 +22,16 @@ class Part:
     paragraph_end: bool
     cache_found: bool
 
+    def is_numeric_or_empty(self):
+        processed_text = (self.text
+                          .replace(" ", "")
+                          .replace(",", "")
+                          .replace(".", ""))
+
+        return processed_text.isnumeric() or len(processed_text) == 0
+
     def need_to_translate(self):
-        return not self.cache_found and self.text and self.text != ""
+        return not self.cache_found and self.text and self.text != "" and not self.is_numeric_or_empty()
 
     def __init__(self, text: str, paragraph_end: bool):
         self.text = text

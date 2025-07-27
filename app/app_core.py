@@ -140,15 +140,16 @@ class AppCore(JaaCore):
     def cache_read(self, req: Request, parts: list[Part]):
         if self.cache_params.enabled and req.translator_plugin not in self.cache_params.disable_for_plugins:
             for part in parts:
-                cached_translate = self.cache.get(req, part.text)
-                if cached_translate:
-                    part.cache_found = True
-                    part.translate = cached_translate
-                else:
-                    part.cache_found = False
+                if part.need_to_translate():
+                    cached_translate = self.cache.get(req, part.text)
+                    if cached_translate:
+                        part.cache_found = True
+                        part.translate = cached_translate
+                    else:
+                        part.cache_found = False
 
     def cache_write(self, req: Request, parts: list[Part]):
         if self.cache_params.enabled and req.translator_plugin not in self.cache_params.disable_for_plugins:
             for part in parts:
-                if not part.cache_found:
+                if part.need_to_translate() and not part.cache_found:
                     self.cache.put(req, part.text, part.translate)
