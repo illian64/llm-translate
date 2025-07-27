@@ -5,6 +5,7 @@
 
 cache.db
 
+test/_trial_temp
 /.idea/
 /options/
 /models/
