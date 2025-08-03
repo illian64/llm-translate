@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 
 # dict_field: dict = field(default_factory=lambda: {})
@@ -11,8 +11,9 @@ class Request:
 
 
 @dataclass
-class Sentence:
-    text: str
+class ModelInitInfo:
+    plugin_name: str
+    model_name: str
 
 
 @dataclass

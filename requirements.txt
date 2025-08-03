@@ -9,3 +9,7 @@ ctranslate2
 blingfire
 pysbd
 
+lmstudio
+
+ebooklib
+beautifulsoup4

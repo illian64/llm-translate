@@ -1,5 +1,5 @@
 from app.app_core import AppCore
-from app.struct import TranslationParams, read_text_split_params, \
+from app.struct import read_text_split_params, \
     read_text_process_params, read_translation_params, read_cache_params
 
 
@@ -52,7 +52,7 @@ def start(core: AppCore):
             },
 
             "cache_params": {
-                "enabled": True,  # enable/disable translate cache
+                "enabled": False,  # enable/disable translate cache
                 "file": "cache.db",  # path to cache file
                 "disable_for_plugins": ["no_translate"], # list of plugin names without cache
                 "expire_days": 0,  # 0 - without expire

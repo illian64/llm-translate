@@ -4,9 +4,9 @@
 import os
 
 from app.app_core import AppCore
-from app.struct import TranslateStruct
+from app.struct import TranslateStruct, ModelInitInfo
 
-modname = os.path.basename(__file__)[:-3]  # calculating modname
+plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
 
 # start function
@@ -23,8 +23,8 @@ def start(core: AppCore):
     return manifest
 
 
-def init(core: AppCore):
-    return modname
+def init(core: AppCore) -> ModelInitInfo:
+    return ModelInitInfo(plugin_name=plugin_name, model_name="")
 
 
 def translate(core: AppCore, ts: TranslateStruct):

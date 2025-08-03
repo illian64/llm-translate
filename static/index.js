@@ -1,6 +1,6 @@
 async function translateText() {
     const elProgress = document.getElementById('progress');
-    const trigger = document.getElementById('trigger');
+    const translate = document.getElementById('translate');
     const errorText = document.getElementById('errorText');
 
     const text = document.getElementById('text').value;
@@ -8,7 +8,7 @@ async function translateText() {
     const toLang = document.getElementById('to_lang_select').value;
     const plugin = document.getElementById('plugin').value;
 
-    trigger.disabled = true;
+    translate.disabled = true;
     elProgress.style.display = 'inline';
 
     const reqBody = JSON.stringify({
@@ -41,20 +41,19 @@ async function translateText() {
         console.error(error.message);
     } finally {
         elProgress.style.display = 'none';
-        trigger.disabled = false;
+        translate.disabled = false;
     }
 }
 
 
 window.onload = () => {
-    const trigger = document.getElementById('trigger');
-    trigger.onmouseup = () => {
+    const translate = document.getElementById('translate');
+    translate.onmouseup = () => {
         translateText();
     };
 
     const langDict = {
-        'en': 'english',
-        'ru': 'russian',
+        '--': 'default from settings',
         'ab': 'abkhazian',
         'aa': 'afar',
         'af': 'afrikaans',
@@ -83,6 +82,7 @@ window.onload = () => {
         'cs': 'czech',
         'da': 'danish',
         'nl': 'dutch',
+        'en': 'english',
         'eo': 'esperanto',
         'et': 'estonian',
         'fo': 'faeroese',
@@ -147,6 +147,7 @@ window.onload = () => {
         'qu': 'quechua',
         'rm': 'rhaeto-romance',
         'ro': 'romanian',
+        'ru': 'russian',
         'sm': 'samoan',
         'sg': 'sangro',
         'sa': 'sanskrit',
@@ -198,6 +199,6 @@ window.onload = () => {
         fromLangSelect.innerHTML += "<option value='" + key + "'>" + value + "</option>";
         toLangSelect.innerHTML += "<option value='" + key + "'>" + value + "</option>";
     }
-    fromLangSelect.value = 'en';
-    toLangSelect.value = 'ru';
+    fromLangSelect.value = '--';
+    toLangSelect.value = '--';
 }

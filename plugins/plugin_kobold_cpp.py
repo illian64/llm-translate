@@ -1,12 +1,14 @@
 import os
 
+import requests
+from tqdm import tqdm
+
 from app import struct
 from app.app_core import AppCore
 from app.lang_dict import get_lang_by_2_chars_code
-from app.struct import TranslateStruct
-import requests
+from app.struct import TranslateStruct, tp, ModelInitInfo
 
-modname = os.path.basename(__file__)[:-3]  # calculating modname
+plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
 
 # start function
@@ -32,12 +34,18 @@ def start_with_options(core: AppCore, manifest: dict):
     pass
 
 
-def init(core: AppCore):
-    return modname
+def init(core: AppCore) -> ModelInitInfo:
+    options = core.plugin_options(plugin_name)
+    url = options['custom_url'] + "/api/v1/model"
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise ValueError(f'Response status {response.status_code} for request by url {url}')
+
+    return ModelInitInfo(plugin_name=plugin_name, model_name=response.json()["result"])
 
 
 def translate(core: AppCore, ts: TranslateStruct):
-    options = core.plugin_options(modname)
+    options = core.plugin_options(plugin_name)
 
     from_lang_name = get_lang_by_2_chars_code(ts.req.from_lang)
     to_lang_name = get_lang_by_2_chars_code(ts.req.to_lang)
@@ -45,7 +53,7 @@ def translate(core: AppCore, ts: TranslateStruct):
     # prompt = options["prompt"].format(from_lang_name, to_lang_name)
     url = options['custom_url'] + "/api/v1/generate"
 
-    for part in ts.parts:
+    for part in tqdm(ts.parts, unit=tp.unit, ascii=tp.ascii, desc=tp.desc):
         if part.need_to_translate():
             prompt = options["prompt"].format(from_lang_name, to_lang_name, part.text)
             length: int
@@ -91,7 +99,7 @@ def translate(core: AppCore, ts: TranslateStruct):
             response = requests.post(url, json=req)
 
             if response.status_code != 200:
-                raise ValueError("Response status {0} for request by url {1}".format(response.status_code, url))
+                raise ValueError(f'Response status {response.status_code} for request by url {url}')
 
             content: str = response.json()["results"][0]['text']
             part.translate = content.strip()

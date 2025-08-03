@@ -3,11 +3,10 @@ import re
 
 from app.struct import TextProcessParams
 
-
 logger = logging.getLogger('uvicorn')
 
 
-def pre_process(params: TextProcessParams, original_text: str):
+def pre_process(params: TextProcessParams, original_text: str) -> str:
     processed_text = replace_text_from_to(original_text, params.replace_text_from_to)
 
     if params.replace_non_standard_new_lines_chars:
@@ -28,7 +27,7 @@ def pre_process(params: TextProcessParams, original_text: str):
     return processed_text
 
 
-def replace_not_text_chars(text: str, allowed_chars_ignoring_replace: set, replace_not_text_target_char: str):
+def replace_not_text_chars(text: str, allowed_chars_ignoring_replace: set, replace_not_text_target_char: str) -> str:
     result = ""
     replaced_chars = []
     for char in text:
@@ -45,7 +44,7 @@ def replace_not_text_chars(text: str, allowed_chars_ignoring_replace: set, repla
     return result
 
 
-def replace_non_standard_new_lines_chars(text: str):
+def replace_non_standard_new_lines_chars(text: str) -> str:
     return text.replace("\r\n", "\n").replace("\n\r", "\n").replace("\r", "\n")
 
 
@@ -57,14 +56,14 @@ def remove_identical_characters(text: str,
     return re.sub(regexp, r'\1' * remove_identical_characters_max_repeats, text)
 
 
-def remove_multiple_spaces(text: str):
+def remove_multiple_spaces(text: str) -> str:
     while '  ' in text:
         text = text.replace('  ', ' ')
 
     return text
 
 
-def replace_text_from_to(text: str, from_to: dict | None):
+def replace_text_from_to(text: str, from_to: dict | None) -> str:
     if from_to and len(from_to) > 0:
         for key, value in from_to.items():
             text = text.replace(key, value)

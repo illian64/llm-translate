@@ -8,9 +8,9 @@ from transformers import AutoTokenizer
 from app import cuda, struct
 from app.app_core import AppCore
 from app.lang_dict import lang_2_chars_to_nllb_lang
-from app.struct import TranslateStruct, tp
+from app.struct import TranslateStruct, tp, ModelInitInfo
 
-modname = os.path.basename(__file__)[:-3]
+plugin_name = os.path.basename(__file__)[:-3]
 
 model: Translator
 tokenizers:dict = {}
@@ -47,19 +47,19 @@ def start_with_options(core: AppCore, manifest:dict):
     return manifest
 
 
-def init(core:AppCore):
-    options = core.plugin_options(modname)
+def init(core:AppCore) -> ModelInitInfo:
+    options = core.plugin_options(plugin_name)
 
     global model
 
-    model = ctranslate2.Translator(options["model"],
+    model = ctranslate2.Translator(options["model"], compute_type=options["compute_type"],
                                    device=cuda.get_device(options), device_index=options["cuda_device_index"])
 
-    return modname
+    return ModelInitInfo(plugin_name=plugin_name, model_name=f'{options["model"]}__{options["compute_type"]}')
 
 
 def translate(core: AppCore, ts: TranslateStruct):
-    options = core.plugin_options(modname)
+    options = core.plugin_options(plugin_name)
 
     from_lang = lang_2_chars_to_nllb_lang[ts.req.from_lang]
     to_lang = lang_2_chars_to_nllb_lang[ts.req.to_lang]

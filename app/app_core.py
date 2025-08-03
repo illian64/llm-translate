@@ -2,10 +2,11 @@ import logging
 import traceback
 
 from app import text_splitter
+from app.books_translate import BookDirectoryTranslate
 from app.cache import Cache
-from app.dto import TranslateResp
+from app.dto import TranslateResp, TranslateBookDirReq, TranslateBookDirResp
 from app.struct import TranslateStruct, TranslationParams, TextSplitParams, TextProcessParams, Request, Part, \
-    CacheParams
+    CacheParams, ModelInitInfo
 from app.text_processor import pre_process
 from jaa import JaaCore
 
@@ -26,7 +27,7 @@ class AppCore(JaaCore):
         self.cache_params: CacheParams = None
 
         self.translators: dict = {}
-        self.initialized_translator_engines = dict()
+        self.initialized_translator_engines: dict[str, ModelInitInfo] = dict()
         self.cache: Cache = None
 
     def process_plugin_manifest(self, modname, manifest):
@@ -36,7 +37,7 @@ class AppCore(JaaCore):
 
         return manifest
 
-    def init_with_plugins(self):
+    def init_with_plugins(self) -> None:
         self.init_plugins(["core"])
         self.cache = Cache(self.cache_params)
 
@@ -44,68 +45,84 @@ class AppCore(JaaCore):
 
         self.init_translator_engine(self.default_translate_plugin)
 
-        init_on_start_list = self.init_on_start.replace(" ", "").split(",")
+        init_on_start_list = self.init_on_start.replace(" ", "").split(",") #TODO to array
         for translator in init_on_start_list:
             if translator != "":
                 self.init_translator_engine(translator)
 
         logger.info("Found translation engines: %s", ", ".join(str(key) for key in self.translators.keys()))
 
-    def init_translator_engine(self, translator_engine: str):
+    def init_translator_engine(self, translator_engine: str) -> None:
         if translator_engine in self.initialized_translator_engines:
             # already inited
             return
 
         try:
             logger.info("Try to init translation plugin '%s'...", translator_engine)
-            modname = self.translators[translator_engine][0](self)
-            self.initialized_translator_engines[translator_engine] = modname
+            model_init_info: ModelInitInfo = self.translators[translator_engine][0](self)
+            self.initialized_translator_engines[translator_engine] = model_init_info
             logger.info("Success init translation plugin: '%s'.", translator_engine)
 
         except Exception as e:
             logger.error("Error init translation plugin '%s'...", translator_engine, e)
 
     def get_plugin_options(self, translator_engine: str):
-        modname = self.initialized_translator_engines[translator_engine]
-        return self.plugin_options(modname)
+        translator_engine = self.initialized_translator_engines[translator_engine].plugin_name
+        return self.plugin_options(translator_engine)
 
-    def get_translation_params(self, translator_engine: str):
+    def get_translation_params(self, translator_engine: str) -> TranslationParams:
         options = self.get_plugin_options(translator_engine)
-        if options['translation_params_struct']:
+        if options and options['translation_params_struct']:
             return options['translation_params_struct']
         else:
             return self.translation_params
 
-    def get_text_split_params(self, translator_engine: str):
+    def get_text_split_params(self, translator_engine: str) -> TextSplitParams:
         options = self.get_plugin_options(translator_engine)
-        if options['text_split_params_struct']:
+        if options and options['text_split_params_struct']:
             return options['text_split_params_struct']
         else:
             return self.text_split_params
 
-    def get_text_process_params(self, translator_engine: str):
+    def get_text_process_params(self, translator_engine: str) -> TextProcessParams:
         options = self.get_plugin_options(translator_engine)
-        if options['text_process_params_struct']:
+        if options and options['text_process_params_struct']:
             return options['text_process_params_struct']
         else:
             return self.text_process_params
 
-    def translate(self, req: Request):
+    def get_translator_plugin(self, req_plugin: str) -> str:
+        translator_plugin: str
+        if not req_plugin or req_plugin == "":
+            translator_plugin = self.default_translate_plugin
+        else:
+            translator_plugin = req_plugin
+
+        if translator_plugin not in self.initialized_translator_engines:
+            raise ValueError("This translate_plugin not in initialized: " + translator_plugin)
+
+        return translator_plugin
+
+    def get_from_language(self, req_lang: str, translator_plugin: str) -> str:
+        if req_lang == "" or req_lang == "--":
+            return self.get_translation_params(translator_plugin).default_from_lang
+        else:
+            return req_lang
+
+    def get_to_language(self, req_lang: str, translator_plugin: str) -> str:
+        if req_lang == "" or req_lang == "--":
+            return self.get_translation_params(translator_plugin).default_to_lang
+        else:
+            return req_lang
+
+    def translate(self, req: Request) -> TranslateResp:
         if req.text == '':
             return TranslateResp(result='', parts=[], error=None)
 
         try:
-            if not req.translator_plugin or req.translator_plugin == "":
-                req.translator_plugin = self.default_translate_plugin
-
-            if req.translator_plugin not in self.initialized_translator_engines:
-                raise ValueError("This translate_plugin not in initialized: " + req.translator_plugin)
-
-            if req.from_lang == "":
-                req.from_lang = self.get_translation_params(req.translator_plugin).default_from_lang
-
-            if req.to_lang == "":
-                req.to_lang = self.get_translation_params(req.translator_plugin).default_to_lang
+            req.translator_plugin = self.get_translator_plugin(req.translator_plugin)
+            req.from_lang = self.get_from_language(req.from_lang, req.translator_plugin)
+            req.to_lang = self.get_to_language(req.to_lang, req.translator_plugin)
 
             processed_text: str
             if self.get_text_process_params(req.translator_plugin).apply_for_request:
@@ -136,6 +153,24 @@ class AppCore(JaaCore):
         except Exception as e:
             traceback.print_tb(e.__traceback__, limit=10)
             return TranslateResp(result=None, parts=None, error=getattr(e, 'message', repr(e)))
+
+    def translate_books_dir(self, req: TranslateBookDirReq) -> TranslateBookDirResp:
+        try:
+            req.translator_plugin = self.get_translator_plugin(req.translator_plugin)
+            req.from_lang = self.get_from_language(req.from_lang, req.translator_plugin)
+            req.to_lang = self.get_to_language(req.to_lang, req.translator_plugin)
+
+            if not req.directory_in or req.directory_in == "":
+                req.directory_in = 'books/in'
+            if not req.directory_out or req.directory_out == "":
+                req.directory_in = 'books/out'
+
+            return BookDirectoryTranslate(self).translate(req)
+        except ValueError as ve:
+            return TranslateBookDirResp(books=None, error=ve.args[0])
+        except Exception as e:
+            traceback.print_tb(e.__traceback__, limit=10)
+            return TranslateBookDirResp(books=None, error=getattr(e, 'message', repr(e)))
 
     def cache_read(self, req: Request, parts: list[Part]):
         if self.cache_params.enabled and req.translator_plugin not in self.cache_params.disable_for_plugins:
