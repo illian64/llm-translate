@@ -7,7 +7,7 @@
     <script type="application/javascript" src="file_processing.js"></script>
     <script type="application/javascript" src="common.js"></script>
     <link rel="stylesheet" href="chota.min.css">
-    <link rel="stylesheet" href="spin.css">
+    <link rel="stylesheet" href="ext.css">
 </head>
 <body>
 <div id="top" class="container" role="document">
@@ -59,7 +59,7 @@
     <div class="row">
         <div class="col">
             <table>
-                <caption>Input directory content</caption>
+                <caption>Input directory content: <span id="directory_in"></span></caption>
                 <thead>
                     <tr><th>File name</th><th>File processor</th></tr>
                 </thead>
@@ -69,7 +69,7 @@
         </div>
         <div class="col">
             <table>
-                <caption>Output directory content</caption>
+                <caption>Output directory content: <span id="directory_out"></span></caption>
                 <thead>
                 <tr><th>File name</th></tr>
                 </thead>

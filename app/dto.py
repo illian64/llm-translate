@@ -83,6 +83,9 @@ class ProcessingFileDirListItemOut:
 class ProcessingFileDirListResp:
     files_in: list[ProcessingFileDirListItemIn]
     files_out: list[ProcessingFileDirListItemOut]
+    directory_in: str
+    directory_out: str
+
     error: str | None
 
 

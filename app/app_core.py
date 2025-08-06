@@ -202,7 +202,10 @@ class AppCore(JaaCore):
         for file_name in file_names:
             files_out.append(ProcessingFileDirListItemOut(file=file_name))
 
-        return ProcessingFileDirListResp(files_in=files_in, files_out=files_out, error=None)
+        return ProcessingFileDirListResp(files_in=files_in, files_out=files_out,
+                                         directory_in=self.file_processing_params.directory_in,
+                                         directory_out=self.file_processing_params.directory_out,
+                                         error=None)
 
     def process_files(self, req: ProcessingFileDirReq) -> ProcessingFileDirResp:
         try:
