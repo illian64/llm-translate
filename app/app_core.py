@@ -1,12 +1,15 @@
 import logging
+import os
 import traceback
+from os import walk
 
 from app import text_splitter
-from app.books_translate import BookDirectoryTranslate
 from app.cache import Cache
-from app.dto import TranslateResp, TranslateBookDirReq, TranslateBookDirResp
-from app.struct import TranslateStruct, TranslationParams, TextSplitParams, TextProcessParams, Request, Part, \
-    CacheParams, ModelInitInfo
+from app.dto import TranslateResp, ProcessingFileDirReq, \
+    ProcessingFileDirResp, TranslatePluginInitInfo, Part, TranslateStruct, FileProcessingPluginInitInfo, \
+    TranslateCommonRequest, ProcessingFileResp, ProcessingFileStruct, ProcessingFileStatus, ProcessingFileDirListResp, \
+    ProcessingFileDirListItemIn, ProcessingFileDirListItemOut
+from app.params import TranslationParams, TextSplitParams, TextProcessParams, CacheParams, FileProcessingParams
 from app.text_processor import pre_process
 from jaa import JaaCore
 
@@ -25,19 +28,36 @@ class AppCore(JaaCore):
         self.text_split_params: TextSplitParams = None
         self.text_process_params: TextProcessParams = None
         self.cache_params: CacheParams = None
+        self.file_processing_params: FileProcessingParams = None
 
         self.translators: dict = {}
-        self.initialized_translator_engines: dict[str, ModelInitInfo] = dict()
+        self.initialized_translator_engines: dict[str, TranslatePluginInitInfo] = dict()
         self.cache: Cache = None
 
+        self.files_ext_to_processors: dict[str, list[FileProcessingPluginInitInfo]] = dict()
+
     def process_plugin_manifest(self, modname, manifest):
-        if "translate" in manifest:  # process commands
+        if "translate" in manifest:  # collect translate plugins
             for cmd in manifest["translate"].keys():
                 self.translators[cmd] = manifest["translate"][cmd]
 
+        if "file_processing" in manifest:  # collect file processing plugins
+            for cmd in manifest["file_processing"].keys():
+                # self.translators[cmd] = manifest["translate"][cmd]
+                init_info: FileProcessingPluginInitInfo = manifest["file_processing"][cmd][0](self)  # init call
+                init_info.name = cmd
+                init_info.processing_function = manifest["file_processing"][cmd][1]
+                init_info.processed_file_name_function = manifest["file_processing"][cmd][2]
+                logger.info("Init file processing plugin '%s' for next file extensions: %s",
+                            init_info.name, init_info.supported_extensions)
+                for ext in init_info.supported_extensions:
+                    ext_list = self.files_ext_to_processors.get(ext, list())
+                    ext_list.append(init_info)
+                    self.files_ext_to_processors[ext] = ext_list
+
         return manifest
 
-    def init_with_plugins(self) -> None:
+    def init_with_translate_plugins(self) -> None:
         self.init_plugins(["core"])
         self.cache = Cache(self.cache_params)
 
@@ -45,7 +65,7 @@ class AppCore(JaaCore):
 
         self.init_translator_engine(self.default_translate_plugin)
 
-        init_on_start_list = self.init_on_start.replace(" ", "").split(",") #TODO to array
+        init_on_start_list = self.init_on_start.replace(" ", "").split(",")  # TODO to array
         for translator in init_on_start_list:
             if translator != "":
                 self.init_translator_engine(translator)
@@ -59,35 +79,31 @@ class AppCore(JaaCore):
 
         try:
             logger.info("Try to init translation plugin '%s'...", translator_engine)
-            model_init_info: ModelInitInfo = self.translators[translator_engine][0](self)
+            model_init_info: TranslatePluginInitInfo = self.translators[translator_engine][0](self)
             self.initialized_translator_engines[translator_engine] = model_init_info
             logger.info("Success init translation plugin: '%s'.", translator_engine)
 
         except Exception as e:
             logger.error("Error init translation plugin '%s'...", translator_engine, e)
 
-    def get_plugin_options(self, translator_engine: str):
-        translator_engine = self.initialized_translator_engines[translator_engine].plugin_name
-        return self.plugin_options(translator_engine)
-
-    def get_translation_params(self, translator_engine: str) -> TranslationParams:
-        options = self.get_plugin_options(translator_engine)
-        if options and options['translation_params_struct']:
-            return options['translation_params_struct']
+    def get_translation_params(self, plugin_name: str) -> TranslationParams:
+        options = self.plugin_options(plugin_name)
+        if options and options.get('translation_params_struct'):
+            return options.get('translation_params_struct')
         else:
             return self.translation_params
 
-    def get_text_split_params(self, translator_engine: str) -> TextSplitParams:
-        options = self.get_plugin_options(translator_engine)
-        if options and options['text_split_params_struct']:
-            return options['text_split_params_struct']
+    def get_text_split_params(self, plugin_name: str) -> TextSplitParams:
+        options = self.plugin_options(plugin_name)
+        if options and options.get('text_split_params_struct'):
+            return options.get('text_split_params_struct')
         else:
             return self.text_split_params
 
-    def get_text_process_params(self, translator_engine: str) -> TextProcessParams:
-        options = self.get_plugin_options(translator_engine)
-        if options and options['text_process_params_struct']:
-            return options['text_process_params_struct']
+    def get_text_process_params(self, plugin_name: str) -> TextProcessParams:
+        options = self.plugin_options(plugin_name)
+        if options and options.get('text_process_params_struct'):
+            return options.get('text_process_params_struct')
         else:
             return self.text_process_params
 
@@ -103,26 +119,27 @@ class AppCore(JaaCore):
 
         return translator_plugin
 
-    def get_from_language(self, req_lang: str, translator_plugin: str) -> str:
+    def get_from_language(self, req_lang: str, plugin_name: str) -> str:
         if req_lang == "" or req_lang == "--":
-            return self.get_translation_params(translator_plugin).default_from_lang
+            return self.get_translation_params(plugin_name).default_from_lang
         else:
             return req_lang
 
-    def get_to_language(self, req_lang: str, translator_plugin: str) -> str:
+    def get_to_language(self, req_lang: str, plugin_name: str) -> str:
         if req_lang == "" or req_lang == "--":
-            return self.get_translation_params(translator_plugin).default_to_lang
+            return self.get_translation_params(plugin_name).default_to_lang
         else:
             return req_lang
 
-    def translate(self, req: Request) -> TranslateResp:
+    def translate(self, req: TranslateCommonRequest) -> TranslateResp:
         if req.text == '':
             return TranslateResp(result='', parts=[], error=None)
 
         try:
             req.translator_plugin = self.get_translator_plugin(req.translator_plugin)
-            req.from_lang = self.get_from_language(req.from_lang, req.translator_plugin)
-            req.to_lang = self.get_to_language(req.to_lang, req.translator_plugin)
+            plugin_name = self.initialized_translator_engines[req.translator_plugin].plugin_name
+            req.from_lang = self.get_from_language(req.from_lang, plugin_name)
+            req.to_lang = self.get_to_language(req.to_lang, plugin_name)
 
             processed_text: str
             if self.get_text_process_params(req.translator_plugin).apply_for_request:
@@ -133,12 +150,12 @@ class AppCore(JaaCore):
             text_parts: list[Part] = text_splitter.split_text(processed_text,
                                                               self.get_text_split_params(req.translator_plugin),
                                                               req.from_lang)
-            self.cache_read(req, text_parts)
+            self.cache.cache_read(req, text_parts, self.cache_params)
 
             translate_struct = TranslateStruct(req=req, processed_text=processed_text, parts=text_parts)
 
             translate_struct: TranslateStruct = self.translators[req.translator_plugin][1](self, translate_struct)
-            self.cache_write(req, translate_struct.parts)
+            self.cache.cache_write(req, translate_struct.parts, self.cache_params)
 
             (translate_text, translate_parts) = text_splitter.join_text(translate_struct.parts)
 
@@ -154,37 +171,132 @@ class AppCore(JaaCore):
             traceback.print_tb(e.__traceback__, limit=10)
             return TranslateResp(result=None, parts=None, error=getattr(e, 'message', repr(e)))
 
-    def translate_books_dir(self, req: TranslateBookDirReq) -> TranslateBookDirResp:
+    def process_files_list(self) -> ProcessingFileDirListResp:
+        # input directory files list
+        file_names: list[str] = []
+        for dir_path, dir_names, file_names in walk(self.file_processing_params.directory_in):
+            break
+
+        files_in: list[ProcessingFileDirListItemIn] = []
+        for file_name in file_names:
+            name, extension = os.path.splitext(file_name)
+            extension = extension.lower().replace(".", "")
+            processor_name = None
+            file_processor_error = None
+            try:
+                processor = self.get_file_processor(extension, None)
+                if processor:
+                    processor_name = processor.name
+            except ValueError as ve:
+                file_processor_error = "error: " + ve.args[0]
+
+            files_in.append(ProcessingFileDirListItemIn(file=file_name, file_processor=processor_name,
+                            file_processor_error=file_processor_error))
+
+        # output directory files list
+        file_names: list[str] = []
+        for dir_path, dir_names, file_names in walk(self.file_processing_params.directory_out):
+            break
+
+        files_out: list[ProcessingFileDirListItemOut] = []
+        for file_name in file_names:
+            files_out.append(ProcessingFileDirListItemOut(file=file_name))
+
+        return ProcessingFileDirListResp(files_in=files_in, files_out=files_out, error=None)
+
+    def process_files(self, req: ProcessingFileDirReq) -> ProcessingFileDirResp:
         try:
             req.translator_plugin = self.get_translator_plugin(req.translator_plugin)
-            req.from_lang = self.get_from_language(req.from_lang, req.translator_plugin)
-            req.to_lang = self.get_to_language(req.to_lang, req.translator_plugin)
+            plugin_name = self.initialized_translator_engines[req.translator_plugin].plugin_name
+            req.from_lang = self.get_from_language(req.from_lang, plugin_name)
+            req.to_lang = self.get_to_language(req.to_lang, plugin_name)
 
             if not req.directory_in or req.directory_in == "":
-                req.directory_in = 'books/in'
+                req.directory_in = self.file_processing_params.directory_in
             if not req.directory_out or req.directory_out == "":
-                req.directory_in = 'books/out'
+                req.directory_in = self.file_processing_params.directory_out
+            if req.preserve_original_text is None:
+                req.preserve_original_text = self.file_processing_params.preserve_original_text
+            if req.overwrite_processed_files is None:
+                req.overwrite_processed_files = self.file_processing_params.overwrite_processed_files
 
-            return BookDirectoryTranslate(self).translate(req)
+            file_names: list[str] = []
+            for dir_path, dir_names, file_names in walk(req.directory_in):
+                break
+
+            if not file_names:
+                return ProcessingFileDirResp([], "")
+
+            files: list[ProcessingFileResp] = []
+            for file_name in file_names:
+                files.append(self.process_file(req, req.directory_in, file_name))
+
+            return ProcessingFileDirResp(files, "")
         except ValueError as ve:
-            return TranslateBookDirResp(books=None, error=ve.args[0])
+            return ProcessingFileDirResp(files=list(), error=ve.args[0])
         except Exception as e:
             traceback.print_tb(e.__traceback__, limit=10)
-            return TranslateBookDirResp(books=None, error=getattr(e, 'message', repr(e)))
+            return ProcessingFileDirResp(files=list(), error=getattr(e, 'message', repr(e)))
 
-    def cache_read(self, req: Request, parts: list[Part]):
-        if self.cache_params.enabled and req.translator_plugin not in self.cache_params.disable_for_plugins:
-            for part in parts:
-                if part.need_to_translate():
-                    cached_translate = self.cache.get(req, part.text)
-                    if cached_translate:
-                        part.cache_found = True
-                        part.translate = cached_translate
-                    else:
-                        part.cache_found = False
+    def process_file(self, req: ProcessingFileDirReq, path: str, file_name: str) -> ProcessingFileResp:
+        try:
+            name, extension = os.path.splitext(file_name)
+            file_struct = ProcessingFileStruct(path=path, file_name=name, file_ext=extension, file_name_ext=file_name)
+            extension = extension.lower().replace(".", "")
+            req_processor = req.file_processor.get(extension) if req.file_processor else None
+            processor = self.get_file_processor(extension, req_processor)
+            if processor is None:
+                return ProcessingFileResp(file_in=f'{req.directory_in}/{file_name}', file_out="",
+                                          state=ProcessingFileStatus.type_not_support,
+                                          file_processor="", message="")
 
-    def cache_write(self, req: Request, parts: list[Part]):
-        if self.cache_params.enabled and req.translator_plugin not in self.cache_params.disable_for_plugins:
-            for part in parts:
-                if part.need_to_translate() and not part.cache_found:
-                    self.cache.put(req, part.text, part.translate)
+            processed_file_name = processor.processed_file_name_function(self, file_struct, req)
+
+            if (not self.file_processing_params.overwrite_processed_files
+                    and os.path.isfile(f'{req.directory_out}/{processed_file_name}')):
+                return ProcessingFileResp(file_in=f'{req.directory_in}/{file_name}',
+                                          file_out=f'{req.directory_out}/{processed_file_name}',
+                                          state=ProcessingFileStatus.translate_already_exists,
+                                          file_processor=processor.name, message="")
+            else:
+                return processor.processing_function(self, file_struct, req)
+
+        except ValueError as ve:
+            return ProcessingFileResp(f'{req.directory_in}/{file_name}', "", ProcessingFileStatus.error, "", ve.args[0])
+        except Exception as e:
+            traceback.print_tb(e.__traceback__, limit=10)
+            return ProcessingFileResp(f'{req.directory_in}/{file_name}', "", ProcessingFileStatus.error, "",  repr(e))
+
+    def get_file_processor(self, extension: str, req_processor: str | None) -> FileProcessingPluginInitInfo | None:
+        if not extension or extension == "":
+            return None
+
+        processors: list[FileProcessingPluginInitInfo] = self.files_ext_to_processors.get(extension, None)
+        if not processors:
+            return None
+
+        if req_processor:  # try to find processor by name from request (if set)
+            for processor in processors:
+                if processor.name == req_processor:
+                    return processor
+        if req_processor:
+            raise ValueError(f'Not found processor with name from request: {req_processor} for extension {extension}')
+
+        if len(processors) == 1:  # only one processor found - ok, return it
+            return processors[0]
+
+        # try to find default processor
+        default_processors_list: list[FileProcessingPluginInitInfo] = []
+        for processor in processors:
+            options = self.plugin_options(processor.plugin_name)
+            if options and options.get('default_extension_processor'):
+                default_processors_list.append(processor)
+
+        if len(default_processors_list) == 1: # only one default processor found - return it
+            return default_processors_list[0]
+        elif len(default_processors_list) > 1: # find more than one default processors - error
+            processor_names = map(lambda p: p.name, default_processors_list)
+            raise ValueError(f'Found more than one default processor {processor_names} for extension: {extension}')
+
+        processor_names = map(lambda p: p.name, processors) # find more than one processor, without default - error
+        raise ValueError(f'Found more than one not default processors {processor_names} for extension: {extension}')

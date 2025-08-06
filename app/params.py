@@ -1,53 +1,6 @@
 from dataclasses import dataclass
 
 
-# dict_field: dict = field(default_factory=lambda: {})
-@dataclass
-class Request:
-    text: str
-    from_lang: str | None
-    to_lang: str | None
-    translator_plugin: str | None
-
-
-@dataclass
-class ModelInitInfo:
-    plugin_name: str
-    model_name: str
-
-
-@dataclass
-class Part:
-    text: str
-    translate: str
-    paragraph_end: bool
-    cache_found: bool
-
-    def is_numeric_or_empty(self):
-        processed_text = (self.text
-                          .replace(" ", "")
-                          .replace(",", "")
-                          .replace(".", ""))
-
-        return processed_text.isnumeric() or len(processed_text) == 0
-
-    def need_to_translate(self):
-        return not self.cache_found and self.text and self.text != "" and not self.is_numeric_or_empty()
-
-    def __init__(self, text: str, paragraph_end: bool):
-        self.text = text
-        self.translate = ""
-        self.paragraph_end = paragraph_end
-        self.cache_found = False
-
-
-@dataclass
-class TranslateStruct:
-    req: Request
-    processed_text: str
-    parts: list[Part]
-
-
 @dataclass
 class TranslationParams:
     default_from_lang: str
@@ -66,7 +19,7 @@ class TextSplitParams:
     # pysbd (default) / blingfire
     sentence_splitter: str
 
-    def split_enabled(self):
+    def split_enabled(self) -> bool:
         return (self.split_by_paragraphs_only or self.split_by_paragraphs_and_length
                 or self.split_by_sentences_and_length or self.split_by_sentences_only)
 
@@ -98,22 +51,31 @@ class CacheParams:
 
 
 @dataclass
+class FileProcessingParams:
+    directory_in: str
+    directory_out: str
+    preserve_original_text: bool
+    overwrite_processed_files: bool
+
+
+@dataclass
 class TranslateProgress:
     unit: str
     ascii: bool
     desc: str
 
 
-tp: TranslateProgress = TranslateProgress(unit="part", ascii=True, desc="translate parts: ")
-
-
-def read_plugin_params(manifest: dict):
+def read_plugin_translate_params(manifest: dict):
     manifest["options"]["translation_params_struct"] = read_translation_params(manifest)
     manifest["options"]["text_split_params_struct"] = read_text_split_params(manifest)
     manifest["options"]["text_process_params_struct"] = read_text_process_params(manifest)
 
 
-def read_translation_params(manifest: dict):
+def read_plugin_file_processing_params(manifest: dict):
+    manifest["options"]["translation_params_struct"] = read_translation_params(manifest)
+
+
+def read_translation_params(manifest: dict) -> TranslationParams | None:
     options = manifest["options"]
     if "translation_params" not in options:
         return None
@@ -124,7 +86,7 @@ def read_translation_params(manifest: dict):
     )
 
 
-def read_text_split_params(manifest: dict):
+def read_text_split_params(manifest: dict) -> TextSplitParams | None:
     options = manifest["options"]
 
     if "text_split_params" not in options:
@@ -142,7 +104,7 @@ def read_text_split_params(manifest: dict):
     )
 
 
-def read_text_process_params(manifest: dict):
+def read_text_process_params(manifest: dict) -> TextProcessParams | None:
     options = manifest["options"]
 
     if "text_processing_params" not in options:
@@ -166,7 +128,7 @@ def read_text_process_params(manifest: dict):
     )
 
 
-def read_cache_params(manifest: dict):
+def read_cache_params(manifest: dict) -> CacheParams:
     options = manifest["options"]
 
     return CacheParams(
@@ -175,3 +137,19 @@ def read_cache_params(manifest: dict):
         disable_for_plugins=options["cache_params"]["disable_for_plugins"],
         expire_days=options["cache_params"]["expire_days"],
     )
+
+
+def read_file_processing_params(manifest: dict) -> FileProcessingParams | None:
+    options = manifest["options"]
+    if "file_processing_params" not in options:
+        return None
+
+    return FileProcessingParams(
+        directory_in=options["file_processing_params"]["directory_in"],
+        directory_out=options["file_processing_params"]["directory_out"],
+        preserve_original_text=options["file_processing_params"]["preserve_original_text"],
+        overwrite_processed_files=options["file_processing_params"]["overwrite_processed_files"],
+    )
+
+
+tp: TranslateProgress = TranslateProgress(unit="part", ascii=True, desc="translate parts: ")

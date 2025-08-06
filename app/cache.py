@@ -1,7 +1,8 @@
 import logging
 import sqlite3
 
-from app.struct import CacheParams, Request
+from app.dto import TranslateCommonRequest, Part
+from app.params import CacheParams
 
 logger = logging.getLogger('uvicorn')
 
@@ -53,7 +54,7 @@ class Cache:
 
         self.connection.commit()
 
-    def get(self, req: Request, text: str):
+    def get(self, req: TranslateCommonRequest, text: str):
         select = "SELECT value FROM {0} WHERE key = ? AND from_lang = ? AND to_lang = ? AND plugin = ?".format(
             self.cache_table_name)
         cursor = self.connection.cursor()
@@ -64,7 +65,7 @@ class Cache:
         else:
             return None
 
-    def put(self, req: Request, text: str, value: str):
+    def put(self, req: TranslateCommonRequest, text: str, value: str):
         try:
             insert_connection = self.get_connection()
             cursor = insert_connection.cursor()
@@ -74,3 +75,20 @@ class Cache:
             insert_connection.close()
         except Exception as e:
             logger.error("Error save cache entry, text = %s, req = %s, error=%s", text, req, e)
+
+    def cache_read(self, req: TranslateCommonRequest, parts: list[Part], params: CacheParams):
+        if params.enabled and req.translator_plugin not in params.disable_for_plugins:
+            for part in parts:
+                if part.need_to_translate():
+                    cached_translate = self.get(req, part.text)
+                    if cached_translate:
+                        part.cache_found = True
+                        part.translate = cached_translate
+                    else:
+                        part.cache_found = False
+
+    def cache_write(self, req: TranslateCommonRequest, parts: list[Part], params: CacheParams):
+        if params.enabled and req.translator_plugin not in params.disable_for_plugins:
+            for part in parts:
+                if part.need_to_translate() and not part.cache_found:
+                    self.put(req, part.text, part.translate)

@@ -6,9 +6,9 @@ from ctranslate2 import Translator
 from tqdm import tqdm
 from transformers import PreTrainedTokenizerBase
 
-from app import cuda, struct
+from app import cuda, params
 from app.app_core import AppCore
-from app.struct import TranslateStruct, tp, ModelInitInfo
+from app.dto import TranslatePluginInitInfo, TranslateStruct
 
 plugin_name = os.path.basename(__file__)[:-3]
 
@@ -43,12 +43,12 @@ def start(core: AppCore):
 
 
 def start_with_options(core: AppCore, manifest:dict):
-    struct.read_plugin_params(manifest)
+    params.read_plugin_translate_params(manifest)
 
     return manifest
 
 
-def init(core:AppCore) -> ModelInitInfo:
+def init(core:AppCore) -> TranslatePluginInitInfo:
     options = core.plugin_options(plugin_name)
 
     global model
@@ -58,7 +58,7 @@ def init(core:AppCore) -> ModelInitInfo:
                                    device=cuda.get_device(options), device_index=options["cuda_device_index"])
     tokenizer = transformers.AutoTokenizer.from_pretrained(options["tokenizer"])
 
-    return ModelInitInfo(plugin_name=plugin_name, model_name=f'{options["model"]}__{options["compute_type"]}')
+    return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=f'{options["model"]}__{options["compute_type"]}')
 
 
 def translate(core: AppCore, ts: TranslateStruct):
@@ -78,7 +78,7 @@ def translate(core: AppCore, ts: TranslateStruct):
 
     # implementation 2: all parts - one batch. It's faster, but depends on amount of batches.
     tokens_list = []
-    for part in tqdm(ts.parts, unit=tp.unit, ascii=tp.ascii, desc=tp.desc):
+    for part in tqdm(ts.parts, unit=params.tp.unit, ascii=params.tp.ascii, desc=params.tp.desc):
         if part.need_to_translate():
             input_text = "<2" + ts.req.to_lang + ">" + part.text
             tokens = tokenizer.convert_ids_to_tokens(tokenizer.encode(input_text))

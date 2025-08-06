@@ -5,10 +5,10 @@ import requests
 from lmstudio import LLM, LlmPredictionConfig
 from tqdm import tqdm
 
-from app import struct
+from app import params
 from app.app_core import AppCore
+from app.dto import TranslatePluginInitInfo, TranslateStruct
 from app.lang_dict import get_lang_by_2_chars_code
-from app.struct import TranslateStruct, tp, ModelInitInfo
 
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
@@ -35,11 +35,11 @@ def start(core: AppCore):
 
 
 def start_with_options(core: AppCore, manifest: dict):
-    struct.read_plugin_params(manifest)
+    params.read_plugin_translate_params(manifest)
     pass
 
 
-def init(core: AppCore) -> ModelInitInfo:
+def init(core: AppCore) -> TranslatePluginInitInfo:
     options = core.plugin_options(plugin_name)
     custom_url: str = options['custom_url']
     use_library_for_request = options["use_library_for_request"]
@@ -47,16 +47,16 @@ def init(core: AppCore) -> ModelInitInfo:
         lmstudio.configure_default_client(custom_url.replace("http://", ""))
         loaded_models = lmstudio.list_loaded_models("llm")
         if len(loaded_models) > 0:
-            return ModelInitInfo(plugin_name=plugin_name, model_name=loaded_models[0].identifier)
+            return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=loaded_models[0].identifier)
         else:
             raise ValueError('List loaded models is empty. Please load model before init this plugin')
     else:
         prompt = "You are assistant. " + options["prompt_postfix"]
         model = http_request(custom_url, prompt, "init")["model"]
-        return ModelInitInfo(plugin_name=plugin_name, model_name=model)
+        return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=model)
 
 
-def translate(core: AppCore, ts: TranslateStruct):
+def translate(core: AppCore, ts: TranslateStruct) -> TranslateStruct:
     options = core.plugin_options(plugin_name)
 
     from_lang_name = get_lang_by_2_chars_code(ts.req.from_lang)
@@ -69,7 +69,7 @@ def translate(core: AppCore, ts: TranslateStruct):
     if use_library_for_request:
         model = lmstudio.llm()
 
-    for part in tqdm(ts.parts, unit=tp.unit, ascii=tp.ascii, desc=tp.desc):
+    for part in tqdm(ts.parts, unit=params.tp.unit, ascii=params.tp.ascii, desc=params.tp.desc):
         if part.need_to_translate():
             content: str
             if use_library_for_request:

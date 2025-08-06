@@ -1,13 +1,14 @@
 import logging
 
 import ebooklib
+from app.struct import TranslateBook, Request
 from bs4 import BeautifulSoup
 from ebooklib import epub
 from tqdm import tqdm
 
 from app.app_core import AppCore
 from app.dto import TranslateBookItemStatus
-from app.struct import TranslateBook, Request, tp
+from app.params import tp
 
 logger = logging.getLogger('uvicorn')
 tag_headers = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6']

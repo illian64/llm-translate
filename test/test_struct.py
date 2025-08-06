@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from app.struct import Part
+from app.dto import Part
 
 
 class StructTest(TestCase):

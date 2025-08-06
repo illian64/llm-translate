@@ -15,7 +15,7 @@ class BookDirectoryTranslate:
         self.translate_func = translate_func
 
     def translate(self, req: TranslateBookDirReq) -> TranslateBookDirResp:
-        filenames = list[str]
+        filenames: list[str] = []
         for dir_path, dir_names, filenames in walk(req.directory_in):
             break
 

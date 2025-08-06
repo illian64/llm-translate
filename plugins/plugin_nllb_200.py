@@ -7,10 +7,10 @@ import os
 from tqdm import tqdm
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
-from app import struct, cuda
+from app import cuda, params
 from app.app_core import AppCore
+from app.dto import TranslatePluginInitInfo, TranslateStruct
 from app.lang_dict import lang_2_chars_to_nllb_lang
-from app.struct import TranslateStruct, tp, ModelInitInfo
 
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
@@ -41,18 +41,18 @@ def start(core: AppCore):
 
 
 def start_with_options(core: AppCore, manifest: dict):
-    struct.read_plugin_params(manifest)
+    params.read_plugin_translate_params(manifest)
 
     return manifest
 
 
-def init(core: AppCore) -> ModelInitInfo:
+def init(core: AppCore) -> TranslatePluginInitInfo:
     options = core.plugin_options(plugin_name)
 
     global model
     model = AutoModelForSeq2SeqLM.from_pretrained(options["model"]).to(cuda.get_device_with_gpu_num(options))
 
-    return ModelInitInfo(plugin_name=plugin_name, model_name=options["model"])
+    return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=options["model"])
 
 
 def translate(core: AppCore, ts: TranslateStruct):
@@ -66,7 +66,7 @@ def translate(core: AppCore, ts: TranslateStruct):
         tokenizers[from_lang] = AutoTokenizer.from_pretrained(options["model"], src_lang=from_lang)
     tokenizer = tokenizers[from_lang]
 
-    for part in tqdm(ts.parts, unit=tp.unit, ascii=tp.ascii, desc=tp.desc):
+    for part in tqdm(ts.parts, unit=params.tp.unit, ascii=params.tp.ascii, desc=params.tp.desc):
         if part.need_to_translate():
             inputs = tokenizer(part.text, return_tensors="pt").to(cuda_device)
 

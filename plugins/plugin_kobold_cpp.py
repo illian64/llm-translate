@@ -3,10 +3,10 @@ import os
 import requests
 from tqdm import tqdm
 
-from app import struct
+from app import params
 from app.app_core import AppCore
+from app.dto import TranslatePluginInitInfo, TranslateStruct
 from app.lang_dict import get_lang_by_2_chars_code
-from app.struct import TranslateStruct, tp, ModelInitInfo
 
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
@@ -30,18 +30,18 @@ def start(core: AppCore):
 
 
 def start_with_options(core: AppCore, manifest: dict):
-    struct.read_plugin_params(manifest)
+    params.read_plugin_translate_params(manifest)
     pass
 
 
-def init(core: AppCore) -> ModelInitInfo:
+def init(core: AppCore) -> TranslatePluginInitInfo:
     options = core.plugin_options(plugin_name)
     url = options['custom_url'] + "/api/v1/model"
     response = requests.get(url)
     if response.status_code != 200:
         raise ValueError(f'Response status {response.status_code} for request by url {url}')
 
-    return ModelInitInfo(plugin_name=plugin_name, model_name=response.json()["result"])
+    return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=response.json()["result"])
 
 
 def translate(core: AppCore, ts: TranslateStruct):
@@ -53,7 +53,7 @@ def translate(core: AppCore, ts: TranslateStruct):
     # prompt = options["prompt"].format(from_lang_name, to_lang_name)
     url = options['custom_url'] + "/api/v1/generate"
 
-    for part in tqdm(ts.parts, unit=tp.unit, ascii=tp.ascii, desc=tp.desc):
+    for part in tqdm(ts.parts, unit=params.tp.unit, ascii=params.tp.ascii, desc=params.tp.desc):
         if part.need_to_translate():
             prompt = options["prompt"].format(from_lang_name, to_lang_name, part.text)
             length: int

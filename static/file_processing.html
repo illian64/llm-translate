@@ -3,8 +3,8 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>LLM translate</title>
-    <script type="application/javascript" src="index.js"></script>
+    <title>LLM translate - file processing</title>
+    <script type="application/javascript" src="file_processing.js"></script>
     <script type="application/javascript" src="common.js"></script>
     <link rel="stylesheet" href="chota.min.css">
     <link rel="stylesheet" href="spin.css">
@@ -13,7 +13,7 @@
 <div id="top" class="container" role="document">
     <div class="row">
         <div class="col">
-            <h5>LLM Translate &nbsp;&nbsp; <a href="file_processing.html">File processing</a></h5>
+            <h5><a href="index.html">LLM Translate</a> &nbsp;&nbsp; File processing</h5>
         </div>
         <div class="col">
             <span id="errorText" class="text-error"></span>
@@ -28,7 +28,7 @@
                 </div>
                 <div class="col">
                     <button id="submit" class="button primary icon" type="submit">
-                        &nbsp; Translate &nbsp;<div id="progress" class="loader" style="display: none;"></div>
+                        &nbsp; Process &nbsp;<div id="progress" class="loader" style="display: none;"></div>
                     </button>
                 </div>
             </div>
@@ -44,16 +44,41 @@
             </div>
         </div>
     </div>
-
     <div class="row">
         <div class="col">
-            <label for="text"></label><textarea id="text" rows="20"></textarea>
+            <label for="preserve_original_text">
+                <input id="preserve_original_text" type="checkbox" checked="checked"> Preserve original text
+            </label>
+            <label for="overwrite_processed_files">
+                <input id="overwrite_processed_files" type="checkbox" checked="checked"> Overwrite processed files
+            </label>
         </div>
-        <div class="col" aria-busy="true">
-            <label for="text_result"></label><textarea id="text_result" rows="20" ></textarea>
+        <div class="col">
         </div>
     </div>
-</div>
+    <div class="row">
+        <div class="col">
+            <table>
+                <caption>Input directory content</caption>
+                <thead>
+                    <tr><th>File name</th><th>File processor</th></tr>
+                </thead>
+                <tbody id="process_files_table_in">
+                </tbody>
+            </table>
+        </div>
+        <div class="col">
+            <table>
+                <caption>Output directory content</caption>
+                <thead>
+                <tr><th>File name</th></tr>
+                </thead>
+                <tbody id="process_files_table_out">
+                </tbody>
+            </table>
+        </div>
+    </div>
 
+
+</div>
 </body>
-</html>

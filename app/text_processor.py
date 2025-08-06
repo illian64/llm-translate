@@ -1,7 +1,7 @@
 import logging
 import re
 
-from app.struct import TextProcessParams
+from app.params import TextProcessParams
 
 logger = logging.getLogger('uvicorn')
 
