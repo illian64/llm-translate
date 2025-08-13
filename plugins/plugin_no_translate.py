@@ -1,4 +1,4 @@
-# No Translate dummy plugin
+# No Translate dummy plugin, for test / debug
 # author: Vladislav Janvarev
 
 import os
@@ -12,7 +12,6 @@ from app.dto import TranslatePluginInitInfo, TranslateStruct
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
 
-# start function
 def start(core: AppCore):
     manifest = {  # plugin settings
         "name": "No Translate dummy plugin",  # name

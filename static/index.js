@@ -1,29 +1,28 @@
 async function translateText() {
     const elProgress = document.getElementById('progress');
-    const translate = document.getElementById('translate');
+    const submit = document.getElementById('submit');
     const errorText = document.getElementById('errorText');
+    submit.disabled = true;
+    elProgress.style.display = 'inline';
 
     const text = document.getElementById('text').value;
     const fromLang = document.getElementById('from_lang_select').value;
     const toLang = document.getElementById('to_lang_select').value;
     const plugin = document.getElementById('plugin').value;
 
-    translate.disabled = true;
-    elProgress.style.display = 'inline';
-
-    const reqBody = JSON.stringify({
-        text: text, from_lang: fromLang, to_lang: toLang,
-        translator_plugin: plugin
-    });
-    const reqParam = {
-        method: 'POST',
-        body: reqBody,
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-        }
-    }
     try {
+        const reqBody = JSON.stringify({
+            text: text, from_lang: fromLang, to_lang: toLang,
+            translator_plugin: plugin
+        });
+        const reqParam = {
+            method: 'POST',
+            body: reqBody,
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            }
+        }
         const response = await fetch(`/translate`, reqParam);
         const data = await response.json();
         if (data.error) {
@@ -41,7 +40,7 @@ async function translateText() {
         console.error(error.message);
     } finally {
         elProgress.style.display = 'none';
-        translate.disabled = false;
+        submit.disabled = false;
     }
 }
 

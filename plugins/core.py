@@ -49,7 +49,7 @@ manifest = {
         },
 
         "cache_params": {
-            "enabled": False,  # enable/disable translate cache
+            "enabled": True,  # enable/disable translate cache
             "file": "cache.db",  # path to cache file
             "disable_for_plugins": ["no_translate"], # list of plugin names without cache
             "expire_days": 0,  # 0 - without expire

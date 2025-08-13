@@ -52,6 +52,9 @@
             <label for="overwrite_processed_files">
                 <input id="overwrite_processed_files" type="checkbox" checked="checked"> Overwrite processed files
             </label>
+            <label for="recursive_sub_dirs">
+                <input id="recursive_sub_dirs" type="checkbox" checked="checked"> Recursive Subdirectories
+            </label>
         </div>
         <div class="col">
         </div>
@@ -59,7 +62,7 @@
     <div class="row">
         <div class="col">
             <table>
-                <caption>Input directory content: <span id="directory_in"></span></caption>
+                <caption><h5>Input directory content: <span id="directory_in"></span></h5></caption>
                 <thead>
                     <tr><th>File name</th><th>File processor</th></tr>
                 </thead>
@@ -69,7 +72,7 @@
         </div>
         <div class="col">
             <table>
-                <caption>Output directory content: <span id="directory_out"></span></caption>
+                <caption><h5>Output directory content: <span id="directory_out"></span></h5></caption>
                 <thead>
                 <tr><th>File name</th></tr>
                 </thead>
@@ -78,7 +81,17 @@
             </table>
         </div>
     </div>
-
-
+    <div class="row">
+        <div class="col">
+            <table>
+                <caption>Processing results</caption>
+                <thead>
+                <tr><th>Source File</th><th>Result File</th><th>Status</th></tr>
+                </thead>
+                <tbody id="process_files_table_result">
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 </body>

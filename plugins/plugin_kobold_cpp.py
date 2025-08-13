@@ -11,7 +11,7 @@ from app.lang_dict import get_lang_by_2_chars_code
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
 
-# start function
+
 def start(core: AppCore):
     manifest = {  # plugin settings
         "name": "KoboldCpp Translator",  # name

@@ -1,25 +1,3 @@
-function fetch_data(functionFetch) {
-    const elProgress = document.getElementById('progress');
-    const submit = document.getElementById('submit');
-    const errorText = document.getElementById('errorText');
-
-    submit.disabled = true;
-    elProgress.style.display = 'inline';
-
-    try {
-        const result = functionFetch();
-        errorText.innerHTML = "";
-
-        return result;
-    } catch (error) {
-        errorText.innerHTML = error.message;
-        console.error(error.message);
-    } finally {
-        elProgress.style.display = 'none';
-        submit.disabled = false;
-    }
-}
-
 function fill_language_select_elements() {
     const fromLangSelect = document.getElementById('from_lang_select');
     const toLangSelect = document.getElementById('to_lang_select');

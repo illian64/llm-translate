@@ -65,8 +65,8 @@ async def translate_post(req: TranslateReq) -> TranslateResp:
 
 
 @app.get("/process-files-list")
-async def process_files_list() -> ProcessingFileDirListResp:
-    return core.process_files_list()
+async def process_files_list(recursive_sub_dirs: bool) -> ProcessingFileDirListResp:
+    return core.process_files_list(recursive_sub_dirs)
 
 
 @app.post("/process-files")

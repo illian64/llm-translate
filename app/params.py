@@ -65,6 +65,20 @@ class TranslateProgress:
     desc: str
 
 
+@dataclass
+class FileProcessingTextFormat:
+    original_prefix: str
+    original_postfix: str
+    translate_prefix: str
+    translate_postfix: str
+
+    def original_text(self, text: str) -> str:
+        return self.original_prefix + text + self.original_postfix
+
+    def translate_text(self, text: str) -> str:
+        return self.translate_prefix + text + self.translate_postfix
+
+
 def read_plugin_translate_params(manifest: dict):
     manifest["options"]["translation_params_struct"] = read_translation_params(manifest)
     manifest["options"]["text_split_params_struct"] = read_text_split_params(manifest)
@@ -149,6 +163,15 @@ def read_file_processing_params(manifest: dict) -> FileProcessingParams | None:
         directory_out=options["file_processing_params"]["directory_out"],
         preserve_original_text=options["file_processing_params"]["preserve_original_text"],
         overwrite_processed_files=options["file_processing_params"]["overwrite_processed_files"],
+    )
+
+
+def read_plugin_file_processing_text_format(options: dict):
+    return FileProcessingTextFormat(
+        original_prefix=options["text_format"]["original_prefix"],
+        original_postfix=options["text_format"]["original_postfix"],
+        translate_prefix=options["text_format"]["translate_prefix"],
+        translate_postfix=options["text_format"]["translate_postfix"],
     )
 
 
