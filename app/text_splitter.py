@@ -1,8 +1,8 @@
 import pysbd
 from blingfire import text_to_sentences
 
-from app.dto import TranslatePart
-from app.struct import TextSplitParams, Part
+from app.dto import TranslatePart, Part
+from app.params import TextSplitParams
 
 
 def is_arr_fin(arr: list, i):

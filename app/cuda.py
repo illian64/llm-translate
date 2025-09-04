@@ -5,7 +5,7 @@ import torch
 logger = logging.getLogger('uvicorn')
 
 
-def cuda_info():
+def cuda_info() -> None:
     cuda_is_available = torch.cuda.is_available()
     device_count = torch.cuda.device_count()
     current_device = torch.cuda.current_device()
@@ -17,14 +17,15 @@ def cuda_info():
         logger.info("GPU #%d: %s", i, torch.cuda.get_device_name(i))
 
 
-def get_device(options: dict):
+def get_device(options: dict) -> str:
     cuda_opt = options["cuda"]
     if cuda_opt:
         return "cuda"
     else:
         return "cpu"
 
-def get_device_with_gpu_num(options: dict):
+
+def get_device_with_gpu_num(options: dict) -> str:
     cuda_opt = options["cuda"]
     if cuda_opt:
         return "cuda:{0}".format(options["cuda_device_index"])

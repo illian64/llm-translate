@@ -40,8 +40,8 @@ main.init_plugins()
 Python 3.5+ (due to dict mix in final_options calc), can be relaxed
 """
 
-import os
 import json
+import os
 
 # here we trying to use termcolor to highlight plugin info and errors during load
 try:
@@ -195,8 +195,8 @@ class JaaCore:
             return self.plugin_manifests[pluginname]
         return {}
 
-    def plugin_options(self, pluginname):
-        manifest = self.plugin_manifest(pluginname)
+    def plugin_options(self, plugin_name):
+        manifest = self.plugin_manifest(plugin_name)
         if "options" in manifest:
             return manifest["options"]
         return None

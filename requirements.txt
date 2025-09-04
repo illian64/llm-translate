@@ -2,6 +2,8 @@ uvicorn
 uvicorn[standard]
 fastapi
 termcolor
+natsort
+chardet
 
 transformers
 ctranslate2
@@ -9,3 +11,7 @@ ctranslate2
 blingfire
 pysbd
 
+lmstudio
+
+ebooklib
+beautifulsoup4

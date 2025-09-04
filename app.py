@@ -1,16 +1,15 @@
-from contextlib import asynccontextmanager
-from fastapi import FastAPI
-import uvicorn
 import logging
+from contextlib import asynccontextmanager
 
+import uvicorn
+from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
 
 from app.app_core import AppCore
 from app.cuda import cuda_info
-from app.dto import TranslateReq
-from app.struct import Request
+from app.dto import TranslateReq, TranslateCommonRequest, TranslateResp, ProcessingFileDirReq, ProcessingFileDirResp, \
+    ProcessingFileDirListResp
 from app.properties import Properties
-
 
 core: AppCore
 logger = logging.getLogger('uvicorn')
@@ -22,7 +21,7 @@ async def lifespan(fast_api: FastAPI):
     logger.info("Starting llm-translate")
     global core
     core = AppCore()
-    core.init_with_plugins()
+    core.init_with_translate_plugins()
 
     yield
     logger.info("Stopping llm-translate")
@@ -33,9 +32,10 @@ properties = Properties()
 
 
 @app.get("/translate")
-async def translate_get(text: str, from_lang: str = "", to_lang: str = "", translator_plugin: str = ""):
+async def translate_get(text: str, from_lang: str = "", to_lang: str = "",
+                        translator_plugin: str = "") -> TranslateResp:
     """
-       Return translation
+       Translate text.
 
        :param str text: text to translate
 
@@ -48,20 +48,28 @@ async def translate_get(text: str, from_lang: str = "", to_lang: str = "", trans
        :param str translator_plugin: to use. If blank, default will be used.
         If not initialized (not in "default_translate_plugin" and not in "init_on_start" from options - throw error)
 
-       :param str api_key: api key for access (if service setup in security mode with api keys)
-
        :return: dict (result: text)
-       """
+    """
 
-    request = Request(text, from_lang, to_lang, translator_plugin)
+    request = TranslateCommonRequest(text, from_lang, to_lang, translator_plugin)
 
     return core.translate(request)
 
 
 @app.post("/translate")
-async def translate_post(req: TranslateReq):
-    request = Request(req.text, req.from_lang, req.to_lang, req.translator_plugin)
+async def translate_post(req: TranslateReq) -> TranslateResp:
+    request = TranslateCommonRequest(req.text, req.from_lang, req.to_lang, req.translator_plugin)
     return core.translate(request)
+
+
+@app.get("/process-files-list")
+async def process_files_list(recursive_sub_dirs: bool) -> ProcessingFileDirListResp:
+    return core.process_files_list(recursive_sub_dirs)
+
+
+@app.post("/process-files")
+async def process_files(req: ProcessingFileDirReq) -> ProcessingFileDirResp:
+    return core.process_files(req)
 
 
 if __name__ == "__main__":

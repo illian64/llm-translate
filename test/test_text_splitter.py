@@ -1,7 +1,8 @@
 import unittest
 
 from app import text_splitter
-from app.struct import TextSplitParams, Part
+from app.dto import Part
+from app.params import TextSplitParams
 
 s1 = "Text one."
 s2 = "Text two."

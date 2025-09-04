@@ -1,15 +1,17 @@
-# No Translate dummy plugin
+# No Translate dummy plugin, for test / debug
 # author: Vladislav Janvarev
 
 import os
 
+from tqdm import tqdm
+
+from app import params
 from app.app_core import AppCore
-from app.struct import TranslateStruct
+from app.dto import TranslatePluginInitInfo, TranslateStruct
 
-modname = os.path.basename(__file__)[:-3]  # calculating modname
+plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
 
-# start function
 def start(core: AppCore):
     manifest = {  # plugin settings
         "name": "No Translate dummy plugin",  # name
@@ -23,12 +25,12 @@ def start(core: AppCore):
     return manifest
 
 
-def init(core: AppCore):
-    return modname
+def init(core: AppCore) -> TranslatePluginInitInfo:
+    return TranslatePluginInitInfo(plugin_name=plugin_name, model_name="")
 
 
 def translate(core: AppCore, ts: TranslateStruct):
-    for part in ts.parts:
+    for part in tqdm(ts.parts, unit=params.tp.unit, ascii=params.tp.ascii, desc=params.tp.desc):
         part.translate = part.text
 
     return ts

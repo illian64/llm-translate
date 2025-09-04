@@ -10,3 +10,4 @@ test/_trial_temp
 /options/
 /models/
 venv
+__pycache__

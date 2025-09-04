@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>LLM translate - file processing</title>
+    <script type="application/javascript" src="file_processing.js"></script>
+    <script type="application/javascript" src="common.js"></script>
+    <link rel="stylesheet" href="chota.min.css">
+    <link rel="stylesheet" href="ext.css">
+</head>
+<body>
+<div id="top" class="container" role="document">
+    <div class="row">
+        <div class="col">
+            <h5><a href="index.html">LLM Translate</a> &nbsp;&nbsp; File processing</h5>
+        </div>
+        <div class="col">
+            <span id="errorText" class="text-error"></span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <select name="from_lang" id="from_lang_select"></select>
+                </div>
+                <div class="col">
+                    <button id="submit" class="button primary icon" type="submit">
+                        &nbsp; Process &nbsp;<div id="progress" class="loader" style="display: none;"></div>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="col">
+            <div class="row">
+                <div class="col">
+                    <select name="to_lang" id="to_lang_select"></select>
+                </div>
+                <div class="col">
+                    <input id="plugin" value="" placeholder="Use translator plugin (optional)"/>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <label for="preserve_original_text">
+                <input id="preserve_original_text" type="checkbox" checked="checked"> Preserve original text
+            </label>
+            <label for="overwrite_processed_files">
+                <input id="overwrite_processed_files" type="checkbox" checked="checked"> Overwrite processed files
+            </label>
+            <label for="recursive_sub_dirs">
+                <input id="recursive_sub_dirs" type="checkbox" checked="checked"> Recursive Subdirectories
+            </label>
+        </div>
+        <div class="col">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <table>
+                <caption><h5>Input directory content: <span id="directory_in"></span></h5></caption>
+                <thead>
+                    <tr><th>File name</th><th>File processor</th></tr>
+                </thead>
+                <tbody id="process_files_table_in">
+                </tbody>
+            </table>
+        </div>
+        <div class="col">
+            <table>
+                <caption><h5>Output directory content: <span id="directory_out"></span></h5></caption>
+                <thead>
+                <tr><th>File name</th></tr>
+                </thead>
+                <tbody id="process_files_table_out">
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <table>
+                <caption>Processing results</caption>
+                <thead>
+                <tr><th>Source File</th><th>Result File</th><th>Status</th></tr>
+                </thead>
+                <tbody id="process_files_table_result">
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+</body>
