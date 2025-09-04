@@ -1,9 +1,11 @@
 async function translateText() {
     const elProgress = document.getElementById('progress');
+    const elResult = document.getElementById('text_result');
     const submit = document.getElementById('submit');
     const errorText = document.getElementById('errorText');
     submit.disabled = true;
     elProgress.style.display = 'inline';
+    elResult.value = '';
 
     const text = document.getElementById('text').value;
     const fromLang = document.getElementById('from_lang_select').value;
@@ -30,7 +32,7 @@ async function translateText() {
             return "";
         } else {
             const translation = data.result;
-            document.getElementById('text_result').value = translation;
+            elResult.value = translation;
 
             errorText.innerHTML = ""
             return translation;

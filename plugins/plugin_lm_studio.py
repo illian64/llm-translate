@@ -13,7 +13,6 @@ from app.lang_dict import get_lang_by_2_chars_code
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
 
-
 def start(core: AppCore):
     manifest = {
         "name": "LM-Studio Translator",  # name
@@ -102,7 +101,7 @@ def http_request(base_url: str, prompt: str, text: str) -> dict:
     response = requests.post(base_url + "/v1/chat/completions", json=req)
 
     if response.status_code != 200:
-        raise ValueError("Response status {0} for request by url {1}".format(response.status_code, url))
+        raise ValueError("Response status {0} for request by url {1}".format(response.status_code, base_url))
 
     return response.json()
 

@@ -10,6 +10,7 @@ manifest = {
     "default_options": {
         "default_translate_plugin": "lm_studio",  # default translation engine. Will be auto inited on start
         "init_on_start": "",  # additional list of engines, that must be init on start, separated by ","
+        "sleep_after_translate": 0,  # delay after translate (in seconds, may be decimal, for example 0.1 for 100 ms), if you GPU too hot
 
         "translation_params": {
             "default_from_lang": "en",  # default from language
@@ -74,11 +75,13 @@ def start_with_options(core: AppCore, manifest: dict):
 
     core.default_translate_plugin = options["default_translate_plugin"]
     core.init_on_start = options["init_on_start"]
+    core.sleep_after_translate = options["sleep_after_translate"]
 
     core.translation_params = params.read_translation_params(manifest)
     core.text_split_params = params.read_text_split_params(manifest)
     core.text_process_params = params.read_text_process_params(manifest)
     core.cache_params = params.read_cache_params(manifest)
     core.file_processing_params = params.read_file_processing_params(manifest)
+
 
     return manifest

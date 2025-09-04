@@ -14,8 +14,6 @@ def start(core: AppCore):
 
         "default_options": {
             "enabled": True,
-            "encoding_input": "utf-8",
-            "encoding_output": "utf-8",
             "markdown_output": False,
             "text_format": {
                 "original_prefix": "",
@@ -57,22 +55,21 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
     new_line_delimiter_count = 2 if markdown_output else 1
 
     result_lines: list[str] = []
-    with open(file_struct.path_file_in(), encoding=options["encoding_input"]) as file:
-        file_content = file.read()
-        lines: list[str] = file_content.splitlines()
-        for line in lines:
-            if line == '':
-                result_lines.append(new_line_delimiter)
-                continue
+    file_content = file_processor.read_file_with_fix_encoding(file_struct.path_file_in())
+    lines: list[str] = file_content.splitlines()
+    for line in lines:
+        if line == '':
+            result_lines.append(new_line_delimiter)
+            continue
 
-            if req.preserve_original_text:
-                result_lines.append(text_format.original_text(line) +
-                                    new_line_delimiter * new_line_delimiter_count)
+        if req.preserve_original_text:
+            result_lines.append(text_format.original_text(line) +
+                                new_line_delimiter * new_line_delimiter_count)
 
-            translate_req = req.translate_req(line)
-            translate_txt = core.translate(translate_req).result
-            translate_txt_format = text_format.translate_text(translate_txt)
-            result_lines.append(translate_txt_format + new_line_delimiter * new_line_delimiter_count)
+        translate_req = req.translate_req(line)
+        translate_txt = core.translate(translate_req).result
+        translate_txt_format = text_format.translate_text(translate_txt)
+        result_lines.append(translate_txt_format + new_line_delimiter * new_line_delimiter_count)
 
     out_file_name = processed_file_name(core=core, file_struct=file_struct, req=req)
     with open(file_struct.path_file_out(out_file_name), "w", encoding=options["encoding_output"]) as f:

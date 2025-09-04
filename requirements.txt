@@ -2,6 +2,8 @@ uvicorn
 uvicorn[standard]
 fastapi
 termcolor
+natsort
+chardet
 
 transformers
 ctranslate2

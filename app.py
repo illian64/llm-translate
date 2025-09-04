@@ -35,7 +35,7 @@ properties = Properties()
 async def translate_get(text: str, from_lang: str = "", to_lang: str = "",
                         translator_plugin: str = "") -> TranslateResp:
     """
-       Return translation
+       Translate text.
 
        :param str text: text to translate
 
@@ -47,8 +47,6 @@ async def translate_get(text: str, from_lang: str = "", to_lang: str = "",
 
        :param str translator_plugin: to use. If blank, default will be used.
         If not initialized (not in "default_translate_plugin" and not in "init_on_start" from options - throw error)
-
-       :param str api_key: api key for access (if service setup in security mode with api keys)
 
        :return: dict (result: text)
     """
