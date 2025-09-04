@@ -15,3 +15,8 @@ lmstudio
 
 ebooklib
 beautifulsoup4
+
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch
+torchvision
+torchaudio
