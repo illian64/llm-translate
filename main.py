@@ -5,11 +5,9 @@ import uvicorn
 from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
 
+from app import dto
 from app.app_core import AppCore
 from app.cuda import cuda_info
-from app.dto import TranslateReq, TranslateCommonRequest, TranslateResp, ProcessingFileDirReq, ProcessingFileDirResp, \
-    ProcessingFileDirListResp
-from app.properties import Properties
 
 core: AppCore
 logger = logging.getLogger('uvicorn')
@@ -17,8 +15,11 @@ logger = logging.getLogger('uvicorn')
 
 @asynccontextmanager
 async def lifespan(fast_api: FastAPI):
-    cuda_info()
     logger.info("Starting llm-translate")
+
+    app.mount('/', StaticFiles(directory='static', html=True), name='static')
+    cuda_info()
+
     global core
     core = AppCore()
     core.init_with_translate_plugins()
@@ -28,12 +29,11 @@ async def lifespan(fast_api: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-properties = Properties()
 
 
 @app.get("/translate")
 async def translate_get(text: str, from_lang: str = "", to_lang: str = "",
-                        translator_plugin: str = "") -> TranslateResp:
+                        translator_plugin: str = "") -> dto.TranslateResp:
     """
        Translate text.
 
@@ -51,31 +51,27 @@ async def translate_get(text: str, from_lang: str = "", to_lang: str = "",
        :return: dict (result: text)
     """
 
-    request = TranslateCommonRequest(text, from_lang, to_lang, translator_plugin)
+    request = dto.TranslateCommonRequest(text, from_lang, to_lang, translator_plugin)
 
     return core.translate(request)
 
 
 @app.post("/translate")
-async def translate_post(req: TranslateReq) -> TranslateResp:
-    request = TranslateCommonRequest(req.text, req.from_lang, req.to_lang, req.translator_plugin)
+async def translate_post(req: dto.TranslateReq) -> dto.TranslateResp:
+    request = dto.TranslateCommonRequest(req.text, req.from_lang, req.to_lang, req.translator_plugin)
+
     return core.translate(request)
 
 
 @app.get("/process-files-list")
-async def process_files_list(recursive_sub_dirs: bool) -> ProcessingFileDirListResp:
+async def process_files_list(recursive_sub_dirs: bool) -> dto.ProcessingFileDirListResp:
     return core.process_files_list(recursive_sub_dirs)
 
 
 @app.post("/process-files")
-async def process_files(req: ProcessingFileDirReq) -> ProcessingFileDirResp:
+async def process_files(req: dto.ProcessingFileDirReq) -> dto.ProcessingFileDirResp:
     return core.process_files(req)
 
 
 if __name__ == "__main__":
-    log_config = uvicorn.config.LOGGING_CONFIG
-    log_config["formatters"]["access"]["fmt"] = "%(asctime)s %(levelname)s %(message)s"
-    log_config["formatters"]["default"]["fmt"] = "%(asctime)s %(levelname)s %(message)s"
-
-    app.mount('/', StaticFiles(directory='static', html=True), name='static')
-    uvicorn.run(app, host="127.0.0.1", port=properties.port, log_level="info", log_config=log_config, use_colors=False)
+    uvicorn.run(app, host="127.0.0.1", port=4990, log_level="info", log_config="log_config.yaml", use_colors=False)

@@ -22,7 +22,7 @@ def start(core: AppCore):
         "version": "1.0",  # version
 
         "translate": {
-            "madlab_ctranslate2": (init, translate)  # 1 function - init, 2 - translate
+            "madlad_400_ctranslate2": (init, translate)  # 1 function - init, 2 - translate
         },
 
         "default_options": {

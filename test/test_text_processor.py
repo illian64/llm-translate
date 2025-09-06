@@ -22,13 +22,13 @@ class TextProcessorTest(TestCase):
         self.assertEqual("| |", processed)
 
     def test_trim_duplicate_characters(self):
-        text = "soooooome textttttt оёёёёёёё 12222223 qÖÖÖÖÖÖöööööwe"
-        processed = text_processor.remove_identical_characters(text, 3, "Ö")
-        self.assertEqual("sooome texttt оёёё 12222223 qÖÖÖöööööwe", processed)
+        text = "soooooome textttttt оёёёёёёё 12222223 qÖÖÖÖÖÖöööööwe こここここ 00000"
+        processed = text_processor.remove_identical_characters(text, 3)
+        self.assertEqual("sooome texttt оёёё 12222223 qÖÖÖöööwe こここ 00000", processed)
 
-        text = "soooooome textttttt оёёёёёёё 12222223 qÖÖÖÖÖÖöööööwe"
-        processed = text_processor.remove_identical_characters(text, 4, "Ö")
-        self.assertEqual("soooome textttt оёёёё 12222223 qÖÖÖÖöööööwe", processed)
+        text = "soooooome textttttt оёёёёёёё 12222223 qÖÖÖÖÖÖöööööwe こここここ 00000"
+        processed = text_processor.remove_identical_characters(text, 4)
+        self.assertEqual("soooome textttt оёёёё 12222223 qÖÖÖÖööööwe ここここ 00000", processed)
 
     def test_remove_multiple_spaces(self):
         text = "q  w     e       r     t y"
@@ -42,3 +42,11 @@ class TextProcessorTest(TestCase):
 
         processed = text_processor.replace_text_from_to(text, {"123": "456", "zxc": "789"})
         self.assertEqual("qwe 456 asd 789", processed)
+
+    def test_remove_multiple_words(self):
+        text = "Hello, hello, hello, hello, hello, world, hello, hello! t1 t1 t1 t1 t1."
+        processed = text_processor.remove_repeated_words(text, 3)
+        self.assertEqual("Hello Hello Hello, world, hello, hello! t1 t1 t1.", processed)
+
+        processed = text_processor.remove_repeated_words(text, 4)
+        self.assertEqual("Hello Hello Hello Hello, world, hello, hello! t1 t1 t1 t1.", processed)
