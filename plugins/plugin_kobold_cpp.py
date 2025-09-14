@@ -11,7 +11,6 @@ from app.lang_dict import get_lang_by_2_chars_code
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
 
-
 def start(core: AppCore):
     manifest = {  # plugin settings
         "name": "KoboldCpp Translator",  # name
@@ -19,7 +18,7 @@ def start(core: AppCore):
 
         "default_options": {
             "custom_url": "http://127.0.0.1:5001",  #
-            "prompt": "\n### Instruction:\nYou are professional translator. Translate this text from {0} to {1}. Don't add any notes or any additional info in your answer, write only translate. Text: {2}\n### Response:\n"
+            "prompt": "\n### Instruction:\nYou are professional translator. Translate this text from %from_lang% to %to_lang%. Don't add any notes or any additional info in your answer, write only translate. Text: %text%\n### Response:\n"
         },
         "translate": {
             "kobold_cpp": (init, translate)  # 1 function - init, 2 - translate
@@ -29,6 +28,9 @@ def start(core: AppCore):
     return manifest
 
 
+max_context_length: int = 4096
+
+
 def start_with_options(core: AppCore, manifest: dict):
     params.read_plugin_translate_params(manifest)
     pass
@@ -36,26 +38,31 @@ def start_with_options(core: AppCore, manifest: dict):
 
 def init(core: AppCore) -> TranslatePluginInitInfo:
     options = core.plugin_options(plugin_name)
-    url = options['custom_url'] + "/api/v1/model"
-    response = requests.get(url)
-    if response.status_code != 200:
-        raise ValueError(f'Response status {response.status_code} for request by url {url}')
 
-    return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=response.json()["result"])
+    url_model = options['custom_url'] + "/api/v1/model"
+    url_max_context_length = options['custom_url'] + "/api/v1/config/max_context_length"
+
+    response_model = get_json_resp(url_model)
+    response_max_context_length = get_json_resp(url_max_context_length)
+
+    global max_context_length
+    max_context_length = response_max_context_length["value"]
+
+    return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=response_model["result"])
 
 
 def translate(core: AppCore, ts: TranslateStruct):
     options = core.plugin_options(plugin_name)
+    prompt_param: str = options["prompt"]
 
-    from_lang_name = get_lang_by_2_chars_code(ts.req.from_lang)
-    to_lang_name = get_lang_by_2_chars_code(ts.req.to_lang)
+    from_lang_name: str = get_lang_by_2_chars_code(ts.req.from_lang)
+    to_lang_name: str = get_lang_by_2_chars_code(ts.req.to_lang)
 
-    # prompt = options["prompt"].format(from_lang_name, to_lang_name)
     url = options['custom_url'] + "/api/v1/generate"
 
     for part in tqdm(ts.parts, unit=params.tp.unit, ascii=params.tp.ascii, desc=params.tp.desc):
         if part.need_to_translate():
-            prompt = options["prompt"].format(from_lang_name, to_lang_name, part.text)
+            prompt = prompt_param.replace("%from_lang%", from_lang_name).replace("%to_lang%", to_lang_name).replace("%text%", part.text)
             length: int
             min_length = 512
             if len(part.text) * 2 < min_length:
@@ -64,7 +71,7 @@ def translate(core: AppCore, ts: TranslateStruct):
                 length = len(part.text) * 2
             req = {
                 "n": 1,
-                "max_context_length": 4096,
+                "max_context_length": max_context_length,
                 "max_length": length,
                 "rep_pen": 1.07,
                 "temperature": 0.01,
@@ -105,3 +112,11 @@ def translate(core: AppCore, ts: TranslateStruct):
             part.translate = content.strip()
 
     return ts
+
+
+def get_json_resp(url: str) -> dict:
+    response = requests.get(url)
+    if response.status_code != 200:
+        raise ValueError(f'Response status {response.status_code} for KoboldCpp request by url {url}')
+
+    return response.json()
