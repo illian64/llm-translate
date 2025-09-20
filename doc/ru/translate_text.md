@@ -20,7 +20,7 @@
   Требуется запустить LM Studio, загрузить и открыть в нем необходимую модель.
 
 
-* **madlad_400_ctranslate2** - [проект](https://huggingface.co/docs/transformers/model_doc/madlad-400) (A Multilingual And Document-Level Large Audited Dataset.),
+* **madlad_400_ctranslate2** - [проект](https://huggingface.co/docs/transformers/model_doc/madlad-400) (A Multilingual And Document-Level Large Audited Dataset),
   [документация](plugins-translate/madlad_400_ctranslate2.md). Поддержка 400+ языковых пар. Эта модель создана исключительно для перевода текста, поддерживаются только модели проекта madlad-400.
 Работа через [CTranslate2](https://github.com/OpenNMT/CTranslate2).
 

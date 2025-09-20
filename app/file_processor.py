@@ -17,9 +17,9 @@ def file_name_from_template(file_struct: ProcessingFileStruct, req: ProcessingFi
     """
     Generate output file name from template. Template in options, for preserve original and not.
     Special parameters in template:
-    %source% - original file name
-    %from_lang% - source language
-    %to_lang% - target language
+    %%source%% - original file name
+    %%from_lang%% - source language
+    %%to_lang%% - target language
 
     :param file_struct: struct with file info
     :param req: file process request
@@ -28,9 +28,9 @@ def file_name_from_template(file_struct: ProcessingFileStruct, req: ProcessingFi
     """
     template_dict = options["output_file_name_template"]
     template = template_dict["preserve_original"] if req.preserve_original_text else template_dict["without_original"]
-    return ((template.replace("%source%", file_struct.file_name)
-                 .replace("%from_lang%", req.from_lang)
-                 .replace("%to_lang%", req.to_lang))
+    return ((template.replace("%%source%%", file_struct.file_name)
+                 .replace("%%from_lang%%", req.from_lang)
+                 .replace("%%to_lang%%", req.to_lang))
             + "." + file_struct.file_ext)
 
 

@@ -31,8 +31,8 @@ def start(core: AppCore):
             "header_tags": ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
             "text_tags": ['p'],
             "output_file_name_template": {
-                "preserve_original": "%source%__%from_lang%_%to_lang%",
-                "without_original": "%source%__%to_lang%",
+                "preserve_original": "%%source%%__%%from_lang%%_%%to_lang%%",
+                "without_original": "%%source%%__%%to_lang%%",
             },
             "translate_other_first_chapters_amount": 0,
             "default_extension_processor": {

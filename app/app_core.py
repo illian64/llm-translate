@@ -143,12 +143,12 @@ class AppCore(JaaCore):
 
             processed_text: str
             if self.get_text_process_params(req.translator_plugin).apply_for_request:
-                processed_text: str = pre_process(self.get_text_process_params(req.translator_plugin), req.text)
+                processed_text: str = pre_process(self.get_text_process_params(plugin_info.plugin_name), req.text)
             else:
                 processed_text = req.text
 
             text_parts: list[Part] = text_splitter.split_text(processed_text,
-                                                              self.get_text_split_params(req.translator_plugin),
+                                                              self.get_text_split_params(plugin_info.plugin_name),
                                                               req.from_lang)
             for text_part in text_parts:
                 if not text_part.need_to_translate():

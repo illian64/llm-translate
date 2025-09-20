@@ -23,8 +23,8 @@ def start(core: AppCore):
             },
             "new_line_delimiter": "\n",
             "output_file_name_template": {
-                "preserve_original": "%source%__%from_lang%_%to_lang%",
-                "without_original": "%source%__%to_lang%",
+                "preserve_original": "%%source%%__%%from_lang%%_%%to_lang%%",
+                "without_original": "%%source%%__%%to_lang%%",
             },
             "default_extension_processor": {
                 "txt": True
