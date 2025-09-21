@@ -1,62 +1,54 @@
-import logging
+import os
 import sqlite3
 
+import pyway.info
+import pyway.migrate
+import pyway.validate
+
+from app import log
 from app.dto import TranslateCommonRequest, Part
 from app.params import CacheParams
 
-logger = logging.getLogger('uvicorn')
+logger = log.logger()
 
 
 class Cache:
-    cache_table_name = "cache_translate"
     params: CacheParams
 
     def __init__(self, params: CacheParams):
         self.params = params
-        self.init()
+        self.init_pybase_migration()
+        self.init_delete_expired_values()
 
     def get_connection(self):
         return sqlite3.connect(self.params.file)
 
-    def init(self):
+    def init_pybase_migration(self):
+        os.environ["PYWAY_TYPE"] = "sqlite"
+        os.environ["PYWAY_TABLE"] = "pyway_migrations"
+        os.environ["PYWAY_DATABASE_NAME"] = self.params.file
+        migration_path = self.params.migration_path if self.params.migration_path else "cache/migrations"
+        os.environ["PYWAY_DATABASE_MIGRATION_DIR"] = migration_path
+        migrate = pyway.migrate.Migrate(pyway.migrate.ConfigFile())
+        logger.info("Result apply migrations: %s", migrate.run())
+
+    def init_delete_expired_values(self) -> None:
         if not self.params.enabled:
             return None
 
         connection = self.get_connection()
         cursor = connection.cursor()
-        cursor.execute(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='{0}'".format(self.cache_table_name))
-        table_exists = cursor.fetchall()
-        cursor.connection.commit()
 
-        if len(table_exists) == 0:
-            logger.info("Init cache table: %s, file db: %s", self.cache_table_name, self.params.file)
-            create_table = """
-                CREATE TABLE IF NOT EXISTS {0} 
-                (key TEXT NOT NULL, created TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
-                from_lang TEXT NOT NULL, to_lang TEXT NOT NULL, plugin TEXT NOT NULL,
-                model TEXT NOT NULL, value TEXT NOT NULL) 
-            """.format(self.cache_table_name)
-            create_idx_translate_cols = ('CREATE UNIQUE INDEX IF NOT EXISTS idx_translate_cols '
-                                         'ON {0} (key, from_lang, to_lang, plugin, model)').format(self.cache_table_name)
-            create_idx_created = ('CREATE INDEX IF NOT EXISTS idx_created '
-                                  'ON {0} (created)').format(self.cache_table_name)
-
-            cursor.execute(create_table)
-            cursor.execute(create_idx_translate_cols)
-            cursor.execute(create_idx_created)
-        else:
-            if (self.params.expire_days > 0):
-                delete_expired_values = "DELETE FROM {0} WHERE created < date('now', '-{1} day')".format(
-                    self.cache_table_name, self.params.expire_days)
-                cursor.execute(delete_expired_values)
+        if self.params.expire_days > 0:
+            delete_expired_values = "DELETE FROM cache_translate WHERE created < date('now', '-{0} day')".format(
+                self.params.expire_days)
+            cursor.execute(delete_expired_values)
 
         connection.commit()
 
     def get(self, req: TranslateCommonRequest, text: str, model_name: str):
-        select = ("SELECT value FROM {0} "
-                  "WHERE key = ? AND from_lang = ? AND to_lang = ? AND plugin = ? AND model = ?").format(
-            self.cache_table_name)
+        select = ("SELECT value FROM cache_translate "
+                  "WHERE key = ? AND from_lang = ? AND to_lang = ? AND plugin = ? AND model = ?")
         cursor = self.get_connection().cursor()
         cursor.execute(select, (text, req.from_lang, req.to_lang, req.translator_plugin, model_name))
         value = cursor.fetchone()
@@ -69,12 +61,12 @@ class Cache:
         try:
             insert_connection = self.get_connection()
             cursor = insert_connection.cursor()
-            insert = 'INSERT INTO {0} (KEY, from_lang, to_lang, plugin, model, VALUE) VALUES (?, ?, ?, ?, ?, ?)'.format(self.cache_table_name)
+            insert = 'INSERT INTO cache_translate (KEY, from_lang, to_lang, plugin, model, VALUE) VALUES (?, ?, ?, ?, ?, ?)'
             cursor.execute(insert,(text, req.from_lang, req.to_lang, req.translator_plugin, model_name, value))
             insert_connection.commit()
             insert_connection.close()
         except Exception as e:
-            logger.error("Error save cache entry, text = %s, req = %s, error=%s", text, req, e)
+            log.log_exception("Error save cache entry, text = {0}, req = {1}".format(text, req), e)
 
     def cache_read(self, req: TranslateCommonRequest, parts: list[Part], params: CacheParams, model_name: str):
         if params.enabled and req.translator_plugin not in params.disable_for_plugins:

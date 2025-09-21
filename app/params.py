@@ -50,6 +50,7 @@ class CacheParams:
     file: str
     disable_for_plugins: list[str]
     expire_days: int
+    migration_path: str | None
 
 
 @dataclass
@@ -154,6 +155,7 @@ def read_cache_params(manifest: dict) -> CacheParams:
         file=options["cache_params"]["file"],
         disable_for_plugins=options["cache_params"]["disable_for_plugins"],
         expire_days=options["cache_params"]["expire_days"],
+        migration_path=None
     )
 
 
