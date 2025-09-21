@@ -25,4 +25,5 @@ jobs:
         python-version: "3.10"
     - name: Test with pytest
       run: |
+        PYTHONPATH="$(pwd)"
         python -m unittest discover tests
