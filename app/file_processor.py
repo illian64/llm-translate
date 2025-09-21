@@ -1,11 +1,11 @@
-import logging
 import os
 
 import chardet
 
+from app import log
 from app.dto import ProcessingFileStruct, ProcessingFileDirReq, ProcessingFileResp, ProcessingFileStatus
 
-logger = logging.getLogger('uvicorn')
+logger = log.logger()
 
 def processed_file_name_def(file_struct: ProcessingFileStruct, req: ProcessingFileDirReq) -> str:
     from_lang_part = "_" + req.from_lang if req.preserve_original_text else ""

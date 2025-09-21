@@ -1,10 +1,8 @@
-import logging
 import os
 import time
-import traceback
 from os import walk
 
-from app import text_splitter, file_processor
+from app import text_splitter, file_processor, log
 from app.cache import Cache
 from app.dto import TranslateResp, ProcessingFileDirReq, \
     ProcessingFileDirResp, TranslatePluginInitInfo, Part, TranslateStruct, FileProcessingPluginInitInfo, \
@@ -14,7 +12,7 @@ from app.params import TranslationParams, TextSplitParams, TextProcessParams, Ca
 from app.text_processor import pre_process
 from jaa import JaaCore
 
-logger = logging.getLogger('uvicorn')
+logger = log.logger()
 version = "0.1.0"
 
 
@@ -174,7 +172,7 @@ class AppCore(JaaCore):
         except ValueError as ve:
             return TranslateResp(result=None, parts=None, error=ve.args[0])
         except Exception as e:
-            traceback.print_tb(e.__traceback__, limit=10)
+            log.log_exception(f"Translate error {repr(req)}", e)
             return TranslateResp(result=None, parts=None, error=getattr(e, 'message', repr(e)))
 
     def process_files_list(self, recursive_sub_dirs: bool) -> ProcessingFileDirListResp:
@@ -242,7 +240,7 @@ class AppCore(JaaCore):
         except ValueError as ve:
             return ProcessingFileDirResp(files=list(), error=ve.args[0])
         except Exception as e:
-            traceback.print_tb(e.__traceback__, limit=10)
+            log.log_exception("Error proces files: ", e)
             return ProcessingFileDirResp(files=list(), error=getattr(e, 'message', repr(e)))
 
     def process_file(self, req: ProcessingFileDirReq, root: str, file_name: str) -> ProcessingFileResp:
@@ -276,12 +274,18 @@ class AppCore(JaaCore):
                 logger.info("Start processing file %s/%s", root.replace(os.sep, "/"), file_name)
                 os.makedirs(file_struct.path_out, exist_ok=True)  # make output directory structure
 
-                return processor.processing_function(self, file_struct, req)
+                try:
+                    return processor.processing_function(self, file_struct, req)
+                except Exception as e:
+                    log.log_exception(f'Error with processing file {file_struct.file_name_ext}', e)
+
+                    return file_processor.get_processing_file_resp_error(
+                        file_in=file_struct.file_name_ext, path_in=file_struct.path_in, error_msg=str(e))
 
         except ValueError as ve:
             return file_processor.get_processing_file_resp_error(file_in=file_name, path_in=root, error_msg=ve.args[0])
         except Exception as e:
-            traceback.print_tb(e.__traceback__, limit=10)
+            log.log_exception(f'Error with processing file {file_name}', e)
             return file_processor.get_processing_file_resp_error(file_in=file_name, path_in=root, error_msg=repr(e))
 
     def get_file_processor(self, extension: str, req_processor: str | None) -> FileProcessingPluginInitInfo | None:

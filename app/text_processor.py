@@ -1,9 +1,9 @@
-import logging
 import re
 
+from app import log
 from app.params import TextProcessParams
 
-logger = logging.getLogger('uvicorn')
+logger = log.logger()
 
 
 def pre_process(params: TextProcessParams, original_text: str) -> str:
@@ -70,7 +70,7 @@ def replace_text_from_to(text: str, from_to: dict | None) -> str:
     return text
 
 
-def remove_repeated_words1(text: str, remove_identical_words_max_repeats) -> str:
+def remove_repeated_words(text: str, remove_identical_words_max_repeats) -> str:
     pattern = r'(\b\w+\b)(?:\s*[^\w\s]*\s*\1){' + str(remove_identical_words_max_repeats) + ',}'
     replacement = ' '.join([r'\1'] * remove_identical_words_max_repeats)
 

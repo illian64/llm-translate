@@ -1,16 +1,16 @@
-import logging
+import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
 from starlette.staticfiles import StaticFiles
 
-from app import dto
+from app import dto, log
 from app.app_core import AppCore
 from app.cuda import cuda_info
 
 core: AppCore
-logger = logging.getLogger('uvicorn')
+logger = log.logger()
 
 
 @asynccontextmanager
@@ -20,9 +20,13 @@ async def lifespan(fast_api: FastAPI):
     app.mount('/', StaticFiles(directory='static', html=True), name='static')
     cuda_info()
 
-    global core
-    core = AppCore()
-    core.init_with_translate_plugins()
+    try:
+        global core
+        core = AppCore()
+        core.init_with_translate_plugins()
+    except Exception as e:
+        log.log_exception("Error init app", e)
+        sys.exit(-1)
 
     yield
     logger.info("Stopping llm-translate")
