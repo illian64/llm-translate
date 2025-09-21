@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 from unittest import TestCase
 
 from app.cache import Cache
@@ -7,8 +8,10 @@ from app.params import CacheParams
 
 
 class CacheTest(TestCase):
-    params = CacheParams(enabled=True, file="../files/test.db", disable_for_plugins=[], expire_days=20,
-                         migration_path="../../cache/migrations")
+    test_dir = Path(__file__).parent.absolute()
+
+    params = CacheParams(enabled=True, file=str(test_dir / "files/test.db"), disable_for_plugins=[], expire_days=20,
+                         migration_path=str(test_dir / "../cache/migrations"))
 
     req = TranslateCommonRequest(text="all text", from_lang="fr", to_lang="to", translator_plugin="plugin1")
 
@@ -24,7 +27,7 @@ class CacheTest(TestCase):
         value2 = cache.get(req=self.req, text="part1 text 1", model_name="model 2")
         self.assertEqual("translate 2", value2)
 
-        os.remove("../files/test.db")
+        os.remove(self.params.file)
 
     def test_delete_expired_values(self):
         cache = Cache(self.params)
@@ -49,6 +52,6 @@ class CacheTest(TestCase):
         value2 = cache.get(req=self.req, text="part1 text 1", model_name="model 2")
         self.assertEqual("translate 2", value2)
 
-        os.remove("../files/test.db")
+        os.remove(self.params.file)
 
 
