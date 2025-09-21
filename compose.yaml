@@ -1,0 +1,26 @@
+services:
+  web-app:
+    build:
+      context: .
+    networks:
+      - app_network
+    ports:
+      - 4990:4990
+    image: illian/llm-translate:0.1.0
+    volumes:
+      - ./cache:/app/cache
+      - ./files_processing:/app/files_processing
+      - ./options:/app/options
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [ gpu ]
+              count: all
+
+networks:
+  app_network:
+    name: app_docker_network
+
+

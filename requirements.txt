@@ -3,25 +3,20 @@ torch
 torchvision
 torchaudio
 
-uvicorn
-uvicorn[standard]
-fastapi
-termcolor
-natsort
-chardet
+uvicorn == 0.34.2
+uvicorn[standard] == 0.34.2
+fastapi == 0.115.12
+termcolor == 3.1.0
+natsort == 8.4.0
+chardet == 5.2.0
 
-transformers
-ctranslate2
+transformers == 4.53.1
+ctranslate2 == 4.6.0
 
-blingfire
-pysbd
+blingfire == 0.1.8
+pysbd == 0.3.4
 
-lmstudio
+lmstudio == 1.4.1
 
-ebooklib
-beautifulsoup4
-
---extra-index-url https://download.pytorch.org/whl/cu128
-torch
-torchvision
-torchaudio
+ebooklib == 0.19
+beautifulsoup4  == 4.13.4

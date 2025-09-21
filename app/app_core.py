@@ -23,7 +23,7 @@ class AppCore(JaaCore):
         JaaCore.__init__(self)
 
         self.default_translate_plugin = ""
-        self.init_on_start = ""
+        self.init_on_start_plugins: list[str] = []
 
         self.translation_params = TranslationParams("", "")
         self.text_split_params: TextSplitParams | None = None
@@ -66,8 +66,7 @@ class AppCore(JaaCore):
 
         self.init_translator_engine(self.default_translate_plugin)
 
-        init_on_start_list = self.init_on_start.replace(" ", "").split(",")  # TODO to array
-        for translator in init_on_start_list:
+        for translator in self.init_on_start_plugins:
             if translator != "":
                 self.init_translator_engine(translator)
 
@@ -144,12 +143,12 @@ class AppCore(JaaCore):
 
             processed_text: str
             if self.get_text_process_params(req.translator_plugin).apply_for_request:
-                processed_text: str = pre_process(self.get_text_process_params(req.translator_plugin), req.text)
+                processed_text: str = pre_process(self.get_text_process_params(plugin_info.plugin_name), req.text)
             else:
                 processed_text = req.text
 
             text_parts: list[Part] = text_splitter.split_text(processed_text,
-                                                              self.get_text_split_params(req.translator_plugin),
+                                                              self.get_text_split_params(plugin_info.plugin_name),
                                                               req.from_lang)
             for text_part in text_parts:
                 if not text_part.need_to_translate():

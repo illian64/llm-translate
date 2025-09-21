@@ -35,8 +35,10 @@ class TextProcessParams:
     replace_not_text_target_char: str
 
     remove_identical_characters: bool
-    remove_identical_characters_extra_chars: str
     remove_identical_characters_max_repeats: int
+
+    remove_repeated_words: bool
+    remove_repeated_words_max_repeats: int
 
     remove_multiple_spaces: bool
     replace_text_from_to: dict
@@ -134,8 +136,10 @@ def read_text_process_params(manifest: dict) -> TextProcessParams | None:
         replace_not_text_target_char=options["text_processing_params"].get("replace_not_text_target_char", " "),
 
         remove_identical_characters=options["text_processing_params"].get("remove_identical_characters", False),
-        remove_identical_characters_extra_chars=options["text_processing_params"].get("remove_identical_characters_extra_chars", ""),
         remove_identical_characters_max_repeats=options["text_processing_params"].get("remove_identical_characters_max_repeats", 3),
+
+        remove_repeated_words=options["text_processing_params"].get("remove_repeated_words", False),
+        remove_repeated_words_max_repeats=options["text_processing_params"].get("remove_repeated_words_max_repeats", 3),
 
         remove_multiple_spaces=options["text_processing_params"].get("remove_multiple_spaces", True),
         replace_text_from_to=options["text_processing_params"].get("replace_text_from_to", {}),

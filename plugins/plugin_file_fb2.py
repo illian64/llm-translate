@@ -28,8 +28,8 @@ def start(core: AppCore):
             "header_tags": [],
             "text_tags": ['p'],
             "output_file_name_template": {
-                "preserve_original": "%source%__%from_lang%_%to_lang%",
-                "without_original": "%source%__%to_lang%",
+                "preserve_original": "%%source%%__%%from_lang%%_%%to_lang%%",
+                "without_original": "%%source%%__%%to_lang%%",
             },
             "translate_only_first_paragraphs": 0,
             "default_extension_processor": {

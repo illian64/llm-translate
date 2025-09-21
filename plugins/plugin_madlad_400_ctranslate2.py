@@ -22,12 +22,12 @@ def start(core: AppCore):
         "version": "1.0",  # version
 
         "translate": {
-            "madlab_ctranslate2": (init, translate)  # 1 function - init, 2 - translate
+            "madlad_400_ctranslate2": (init, translate)  # 1 function - init, 2 - translate
         },
 
         "default_options": {
-            "model": "models/madlad400-10b-mt-bfloat16",  # key model
-            "tokenizer": "jbochi/madlad400-10b-mt",  # transformers.AutoTokenizer
+            "model": "models/madlad400-10b-mt-ct2-bfloat16",  # key model
+            "tokenizer": "models/madlad400-10b-mt-ct2-bfloat16",  # transformers.AutoTokenizer
             "compute_type": "bfloat16",
             "cuda": True,  # false if you want to run on CPU, true - if on CUDA
             "cuda_device_index": 0,  # GPU index (if you have more than one GPU)

@@ -20,9 +20,10 @@ def pre_process(params: TextProcessParams, original_text: str) -> str:
             original_text, params.allowed_chars_ignoring_replace, params.replace_not_text_target_char)
 
     if params.remove_identical_characters:
-        processed_text = remove_identical_characters(
-            processed_text, params.remove_identical_characters_max_repeats,
-            params.remove_identical_characters_extra_chars)
+        processed_text = remove_identical_characters(processed_text, params.remove_identical_characters_max_repeats)
+
+    if params.remove_repeated_words:
+        processed_text = remove_repeated_words(processed_text, params.remove_repeated_words_max_repeats)
 
     return processed_text
 
@@ -48,12 +49,10 @@ def replace_non_standard_new_lines_chars(text: str) -> str:
     return text.replace("\r\n", "\n").replace("\n\r", "\n").replace("\r", "\n")
 
 
-def remove_identical_characters(text: str,
-                                remove_identical_characters_max_repeats: int,
-                                remove_identical_characters_extra_chars: str):
-    chars = 'A-zА-яЁё' + remove_identical_characters_extra_chars
-    regexp = re.compile(r'([%s])\1{%d,}' % (chars, remove_identical_characters_max_repeats))
-    return re.sub(regexp, r'\1' * remove_identical_characters_max_repeats, text)
+def remove_identical_characters(text, remove_identical_characters_max_repeats):
+    # Удаляет символы, повторяющиеся более max_repeats раз
+    pattern = r'([^\d])\1{' + str(remove_identical_characters_max_repeats) + ',}'
+    return re.sub(pattern, r'\1' * remove_identical_characters_max_repeats, text)
 
 
 def remove_multiple_spaces(text: str) -> str:
@@ -69,4 +68,15 @@ def replace_text_from_to(text: str, from_to: dict | None) -> str:
             text = text.replace(key, value)
 
     return text
+
+
+def remove_repeated_words1(text: str, remove_identical_words_max_repeats) -> str:
+    pattern = r'(\b\w+\b)(?:\s*[^\w\s]*\s*\1){' + str(remove_identical_words_max_repeats) + ',}'
+    replacement = ' '.join([r'\1'] * remove_identical_words_max_repeats)
+
+    return re.sub(pattern=pattern, repl=replacement, string=text, flags=re.IGNORECASE)
+
+
+
+
 

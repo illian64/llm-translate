@@ -1,3 +1,0 @@
-Open https://pytorch.org/get-started/locally/ and select your variant, for example:
-
-pip3 install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu128

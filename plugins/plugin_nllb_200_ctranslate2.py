@@ -67,7 +67,8 @@ def translate(core: AppCore, ts: TranslateStruct):
         tokenizers[from_lang] = AutoTokenizer.from_pretrained(options["model"], src_lang=from_lang)
     tokenizer = tokenizers[from_lang]
 
-    # translate_batch not optimal, but there are problems with try to implement batch processing like madlab_ctranslate2
+    # translate_batch in this implementation not optimal,
+    # but there are problems with try to implement batch processing like madlab_ctranslate2
     for part in tqdm(ts.parts, unit=params.tp.unit, ascii=params.tp.ascii, desc=params.tp.desc):
         if part.need_to_translate():
             input_text = part.text

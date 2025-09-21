@@ -8,8 +8,8 @@ manifest = {
     # this is DEFAULT options
     # ACTUAL options is in options/<plugin_name>.json after first run
     "default_options": {
-        "default_translate_plugin": "lm_studio",  # default translation engine. Will be auto inited on start
-        "init_on_start": "",  # additional list of engines, that must be init on start, separated by ","
+        "default_translate_plugin": "nllb_200",  # default translation engine. Will be auto inited on start
+        "init_on_start_plugins": [],  # additional list of engines, that must be init on start
         "sleep_after_translate": 0,  # delay after translate (in seconds, may be decimal, for example 0.1 for 100 ms), if you GPU too hot
 
         "translation_params": {
@@ -41,8 +41,11 @@ manifest = {
 
             # replace more than N char consecutive, for example: aaaa -> aaa, bbbbbbb -> bbb
             "remove_identical_characters": True,
-            "remove_identical_characters_extra_chars": "",
             "remove_identical_characters_max_repeats": 3,
+
+            # replace more than N words consecutive, for example: hello, hello, hello, hello, hello, world, hello, hello! -> hello hello hello, world, hello, hello!
+            "remove_repeated_words": False,
+            "remove_repeated_words_max_repeats": 3,
 
             "remove_multiple_spaces": True, # replace two or more space to one
             "replace_text_from_to": {  # additional replace variants, from : to
@@ -51,7 +54,7 @@ manifest = {
 
         "cache_params": {
             "enabled": True,  # enable/disable translate cache
-            "file": "cache.db",  # path to cache file
+            "file": "cache/cache.db",  # path to cache file
             "disable_for_plugins": ["no_translate"], # list of plugin names without cache
             "expire_days": 0,  # 0 - without expire
         },
@@ -60,7 +63,7 @@ manifest = {
             "directory_in": "files_processing/in",
             "directory_out": "files_processing/out",
             "preserve_original_text": True,
-            "overwrite_processed_files": False
+            "overwrite_processed_files": True
         },
     },
 }
@@ -74,7 +77,7 @@ def start_with_options(core: AppCore, manifest: dict):
     options = manifest["options"]
 
     core.default_translate_plugin = options["default_translate_plugin"]
-    core.init_on_start = options["init_on_start"]
+    core.init_on_start_plugins = options["init_on_start_plugins"]
     core.sleep_after_translate = options["sleep_after_translate"]
 
     core.translation_params = params.read_translation_params(manifest)
