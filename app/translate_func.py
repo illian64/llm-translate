@@ -2,8 +2,13 @@ import requests
 
 
 def generate_prompt(prompt_param: str, from_lang_name: str, to_lang_name: str,
-                    postfix_param: str, prompt_no_think_postfix_param: bool) -> str:
+                    postfix_param: str, prompt_no_think_postfix_param: bool, context: str) -> str:
     prompt = prompt_param.replace("%%from_lang%%", from_lang_name).replace("%%to_lang%%", to_lang_name)
+    if context and len(context.strip()) > 0:
+        prompt = prompt.replace("%%context%%", context)
+    else:
+        prompt = prompt.replace("%%context%%", "")
+
     postfix = get_prompt_postfix(postfix_param, prompt_no_think_postfix_param)
 
     return prompt + postfix

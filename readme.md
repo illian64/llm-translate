@@ -28,10 +28,10 @@ Supports text translation via the web interface or API requests, and files trans
   [Документация](doc/ru/translate_text.md).
 * `/options` - папка с настройками сервиса и плагинов. [Документация](doc/ru/options.md).
 * `/plugins` - папка с python-файлами плагинов, перевода и обработки файлов.
+* `/resources` - папка с файлами ресурсов проекта, такими, как файл конфигурация логов, файлы миграции базы данных кэша.
 * `/static` - папка с html, css, js файлами для веб-интерфейса.
 * `/test` - файлы unit-тестов для исходного кода.
 * `compose.yaml` - файл с настройками для запуска Docker-контейнера. [Документация](doc/ru/install.md).
 * `Dockerfile` - файл с настройками создания Docker-контейнера. [Документация](doc/ru/install.md).
 * `jaa.py` - библиотека управления плагинами.
-* `log_config.yaml` - конфигурация логов.
 * `requirements.txt` - список внешних зависимостей проекта.
