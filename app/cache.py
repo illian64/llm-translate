@@ -1,3 +1,4 @@
+import hashlib
 import os
 import sqlite3
 
@@ -27,7 +28,7 @@ class Cache:
         os.environ["PYWAY_TYPE"] = "sqlite"
         os.environ["PYWAY_TABLE"] = "pyway_migrations"
         os.environ["PYWAY_DATABASE_NAME"] = self.params.file
-        migration_path = self.params.migration_path if self.params.migration_path else "cache/migrations"
+        migration_path = self.params.migration_path if self.params.migration_path else "resources/migrations"
         os.environ["PYWAY_DATABASE_MIGRATION_DIR"] = migration_path
         migrate = pyway.migrate.Migrate(pyway.migrate.ConfigFile())
         logger.info("Result apply migrations: %s", migrate.run())
@@ -48,9 +49,10 @@ class Cache:
 
     def get(self, req: TranslateCommonRequest, text: str, model_name: str):
         select = ("SELECT value FROM cache_translate "
-                  "WHERE key = ? AND from_lang = ? AND to_lang = ? AND plugin = ? AND model = ?")
+                  "WHERE key = ? AND from_lang = ? AND to_lang = ? AND plugin = ? AND model = ? AND context_hash = ?")
         cursor = self.get_connection().cursor()
-        cursor.execute(select, (text, req.from_lang, req.to_lang, req.translator_plugin, model_name))
+        cursor.execute(select, (text, req.from_lang, req.to_lang, req.translator_plugin, model_name,
+                                self.context_hash(req.context)))
         value = cursor.fetchone()
         if value:
             return value[0]
@@ -61,8 +63,9 @@ class Cache:
         try:
             insert_connection = self.get_connection()
             cursor = insert_connection.cursor()
-            insert = 'INSERT INTO cache_translate (KEY, from_lang, to_lang, plugin, model, VALUE) VALUES (?, ?, ?, ?, ?, ?)'
-            cursor.execute(insert,(text, req.from_lang, req.to_lang, req.translator_plugin, model_name, value))
+            insert = 'INSERT INTO cache_translate (KEY, from_lang, to_lang, plugin, model, context_hash, VALUE) VALUES (?, ?, ?, ?, ?, ?, ?)'
+            cursor.execute(insert,(text, req.from_lang, req.to_lang, req.translator_plugin, model_name,
+                                   self.context_hash(req.context), value))
             insert_connection.commit()
             insert_connection.close()
         except Exception as e:
@@ -84,3 +87,9 @@ class Cache:
             for part in parts:
                 if part.need_to_translate() and not part.cache_found:
                     self.put(req, part.text, part.translate, model_name)
+
+    def context_hash(self, context: str | None) -> int:
+        if context and len(context.strip()) > 0:
+            return int(hashlib.sha1(context.encode("utf-8")).hexdigest(), 16) % 100000000
+        else:
+            return 0

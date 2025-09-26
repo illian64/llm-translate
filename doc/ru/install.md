@@ -42,5 +42,5 @@ http://host.docker.internal:port
 
 Для запуска требуется Python, CUDA (опционально, для некоторых плагинов), установленные Python-зависимости (venv, conda...).
 Запуск через
-* `python -m uvicorn main:app --reload --host=0.0.0.0 --port=4990 --log-level=info --log-config=log_config.yaml`
+* `python -m uvicorn main:app --reload --host=0.0.0.0 --port=4990 --log-level=info --log-config=resources/log_config.yaml`
 * или `__main__` метод в `main.py` (в корне проекта).

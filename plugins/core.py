@@ -10,11 +10,11 @@ manifest = {
     "default_options": {
         "default_translate_plugin": "nllb_200",  # default translation engine. Will be auto inited on start
         "init_on_start_plugins": [],  # additional list of engines, that must be init on start
-        "sleep_after_translate": 0,  # delay after translate (in seconds, may be decimal, for example 0.1 for 100 ms), if you GPU too hot
 
         "translation_params": {
             "default_from_lang": "en",  # default from language
             "default_to_lang": "ru",  # default to language
+            "sleep_after_translate": 0,  # delay after translate (in seconds, may be decimal, for example 0.1 for 100 ms), if you GPU too hot
         },
 
         "text_split_params": {
@@ -63,7 +63,14 @@ manifest = {
             "directory_in": "files_processing/in",
             "directory_out": "files_processing/out",
             "preserve_original_text": True,
-            "overwrite_processed_files": True
+            "overwrite_processed_files": True,
+            "context": {
+                "enabled": True,
+                "prompt": "To improve the translation, use the following context, which is the paragraphs that preceded the text to be translated. Context: %%context%%",
+                "expected_length": 500,
+                "include_at_least_one_paragraph": True,
+                "paragraph_join_str": "\n",
+            },
         },
     },
 }
@@ -78,13 +85,11 @@ def start_with_options(core: AppCore, manifest: dict):
 
     core.default_translate_plugin = options["default_translate_plugin"]
     core.init_on_start_plugins = options["init_on_start_plugins"]
-    core.sleep_after_translate = options["sleep_after_translate"]
 
     core.translation_params = params.read_translation_params(manifest)
     core.text_split_params = params.read_text_split_params(manifest)
     core.text_process_params = params.read_text_process_params(manifest)
     core.cache_params = params.read_cache_params(manifest)
     core.file_processing_params = params.read_file_processing_params(manifest)
-
 
     return manifest

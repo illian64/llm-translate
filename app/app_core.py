@@ -23,7 +23,7 @@ class AppCore(JaaCore):
         self.default_translate_plugin = ""
         self.init_on_start_plugins: list[str] = []
 
-        self.translation_params = TranslationParams("", "")
+        self.translation_params = TranslationParams("", "", 0)
         self.text_split_params: TextSplitParams | None = None
         self.text_process_params: TextProcessParams | None = None
         self.cache_params: CacheParams | None = None
@@ -34,7 +34,6 @@ class AppCore(JaaCore):
         self.cache: Cache | None = None
 
         self.files_ext_to_processors: dict[str, list[FileProcessingPluginInitInfo]] = dict()
-        self.sleep_after_translate: float = 0.0
 
     def process_plugin_manifest(self, modname, manifest):
         if "translate" in manifest:  # collect translate plugins
@@ -158,8 +157,8 @@ class AppCore(JaaCore):
             if translate_struct.need_to_translate():
                 translate_struct: TranslateStruct = self.translators[req.translator_plugin][1](self, translate_struct)
                 self.cache.cache_write(req, translate_struct.parts, self.cache_params, plugin_info.model_name)
-                if self.sleep_after_translate > 0:
-                    time.sleep(self.sleep_after_translate)
+                if self.get_translation_params(plugin_info.plugin_name).sleep_after_translate > 0:
+                    time.sleep(self.get_translation_params(plugin_info.plugin_name).sleep_after_translate)
 
             (translate_text, translate_parts) = text_splitter.join_text(translate_struct.parts)
 

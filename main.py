@@ -36,12 +36,14 @@ app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/translate")
-async def translate_get(text: str, from_lang: str = "", to_lang: str = "",
+async def translate_get(text: str, from_lang: str = "", to_lang: str = "", context: str = None,
                         translator_plugin: str = "") -> dto.TranslateResp:
     """
        Translate text. GET-request.
 
        :param str text: text to translate
+
+       :param context: additional context to translate (if model has context support)
 
        :param str from_lang: from language (2 symbols, like "en").
        May be empty (will be replaced to "default_from_lang" from options)
@@ -55,7 +57,8 @@ async def translate_get(text: str, from_lang: str = "", to_lang: str = "",
        :return: dto.TranslateResp with translate result and
     """
 
-    request = dto.TranslateCommonRequest(text, from_lang, to_lang, translator_plugin)
+    request = dto.TranslateCommonRequest(text=text, context=context, from_lang=from_lang, to_lang=to_lang,
+                                         translator_plugin=translator_plugin)
 
     return core.translate(request)
 
@@ -69,6 +72,8 @@ async def translate_post(req: dto.TranslateReq) -> dto.TranslateResp:
 
        req.text: text to translate
 
+       req.context: additional context to translate (if model has context support)
+
        req.from_lang: from language (2 symbols, like "en").
        May be empty (will be replaced to "default_from_lang" from options)
 
@@ -80,7 +85,8 @@ async def translate_post(req: dto.TranslateReq) -> dto.TranslateResp:
 
        :return: dict (result: text)
     """
-    request = dto.TranslateCommonRequest(req.text, req.from_lang, req.to_lang, req.translator_plugin)
+    request = dto.TranslateCommonRequest(text=req.text, context=req.context, from_lang=req.from_lang, to_lang=req.to_lang,
+                                         translator_plugin=req.translator_plugin)
 
     return core.translate(request)
 
@@ -110,4 +116,4 @@ async def process_files(req: dto.ProcessingFileDirReq) -> dto.ProcessingFileDirR
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=4990, log_level="info", log_config="log_config.yaml", use_colors=False)
+    uvicorn.run(app, host="127.0.0.1", port=4990, log_level="info", log_config="resources/log_config.yaml", use_colors=False)

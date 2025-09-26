@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class TranslationParams:
     default_from_lang: str
     default_to_lang: str
-
+    sleep_after_translate: float
 
 @dataclass
 class TextSplitParams:
@@ -54,11 +54,21 @@ class CacheParams:
 
 
 @dataclass
+class FileProcessingContextParams:
+    enabled: bool
+    prompt: str
+    expected_length: int
+    include_at_least_one_paragraph: bool
+    paragraph_join_str: str
+
+
+@dataclass
 class FileProcessingParams:
     directory_in: str
     directory_out: str
     preserve_original_text: bool
     overwrite_processed_files: bool
+    context_params: FileProcessingContextParams
 
 
 @dataclass
@@ -99,7 +109,8 @@ def read_translation_params(manifest: dict) -> TranslationParams | None:
 
     return TranslationParams(
         default_from_lang=options["translation_params"]["default_from_lang"],
-        default_to_lang=options["translation_params"]["default_to_lang"]
+        default_to_lang=options["translation_params"]["default_to_lang"],
+        sleep_after_translate=options["translation_params"].get("sleep_after_translate", 0),
     )
 
 
@@ -164,11 +175,21 @@ def read_file_processing_params(manifest: dict) -> FileProcessingParams | None:
     if "file_processing_params" not in options:
         return None
 
+    context_options = options["file_processing_params"]["context"]
+    context_params = FileProcessingContextParams(
+        enabled=context_options["enabled"],
+        prompt=context_options["prompt"],
+        expected_length=context_options["expected_length"],
+        paragraph_join_str=context_options["paragraph_join_str"],
+        include_at_least_one_paragraph=context_options["include_at_least_one_paragraph"],
+    )
+
     return FileProcessingParams(
         directory_in=options["file_processing_params"]["directory_in"],
         directory_out=options["file_processing_params"]["directory_out"],
         preserve_original_text=options["file_processing_params"]["preserve_original_text"],
         overwrite_processed_files=options["file_processing_params"]["overwrite_processed_files"],
+        context_params=context_params,
     )
 
 

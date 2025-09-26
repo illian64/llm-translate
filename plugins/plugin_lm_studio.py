@@ -70,8 +70,10 @@ def translate(core: AppCore, ts: TranslateStruct) -> TranslateStruct:
     from_lang_name = get_lang_by_2_chars_code(ts.req.from_lang)
     to_lang_name = get_lang_by_2_chars_code(ts.req.to_lang)
 
-    prompt = translate_func.generate_prompt(options["prompt"], from_lang_name, to_lang_name,
-                                            options["prompt_postfix"], options['prompt_no_think_postfix'])
+    prompt = translate_func.generate_prompt(prompt_param=options["prompt"], from_lang_name=from_lang_name,
+                                            to_lang_name=to_lang_name, postfix_param=options["prompt_postfix"],
+                                            prompt_no_think_postfix_param=options['prompt_no_think_postfix'],
+                                            context=ts.req.context)
     use_library_for_request = options["use_library_for_request"]
 
     for part in tqdm(ts.parts, unit=params.tp.unit, ascii=params.tp.ascii, desc=params.tp.desc):

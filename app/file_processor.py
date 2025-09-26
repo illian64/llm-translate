@@ -4,8 +4,10 @@ import chardet
 
 from app import log
 from app.dto import ProcessingFileStruct, ProcessingFileDirReq, ProcessingFileResp, ProcessingFileStatus
+from app.params import FileProcessingContextParams
 
 logger = log.logger()
+
 
 def processed_file_name_def(file_struct: ProcessingFileStruct, req: ProcessingFileDirReq) -> str:
     from_lang_part = "_" + req.from_lang if req.preserve_original_text else ""
@@ -23,7 +25,7 @@ def file_name_from_template(file_struct: ProcessingFileStruct, req: ProcessingFi
 
     :param file_struct: struct with file info
     :param req: file process request
-    :param template: template with special parameters
+    :param options: template parameters source
     :return: output file name
     """
     template_dict = options["output_file_name_template"]
@@ -73,3 +75,38 @@ def read_file_with_fix_encoding(path_file: str) -> str:
         else:
             return content_raw.decode(encoding="utf-8")
 
+
+def get_context(items_to_context: list[str], params: FileProcessingContextParams, translate_text: str) -> str | None:
+    """
+    Generate context message for file processing.
+    If params.enabled -> None.
+    If translate_text == item in items_to_context - this item will be ignored.
+
+    :param items_to_context: all previous paragraphs in file
+    :param params: cache params
+    :param translate_text: current text to translate
+    :return: context message or None if not text tto generate context
+    """
+
+    if params.enabled:
+        result_list: list[str] = []
+        result_list_context_length = 0
+
+        for item in reversed(items_to_context):
+            if translate_text == item:
+                continue
+
+            strip_item = item.strip()
+            add_anyway = len(result_list) == 0 and params.include_at_least_one_paragraph
+            if add_anyway or (len(strip_item) + result_list_context_length <= params.expected_length):
+                result_list.insert(0, strip_item)
+                result_list_context_length += len(strip_item)
+            else:
+                break
+
+        if len(result_list) == 0:
+            return None
+        else:
+            return params.prompt.replace("%%context%%", params.paragraph_join_str.join(result_list))
+    else:
+        return None

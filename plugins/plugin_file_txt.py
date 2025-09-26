@@ -55,6 +55,7 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
     new_line_delimiter_count = 2 if markdown_output else 1
 
     result_lines: list[str] = []
+    all_original_text_items: list[str] = []
     file_content = file_processor.read_file_with_fix_encoding(file_struct.path_file_in())
     lines: list[str] = file_content.splitlines()
     for line in lines:
@@ -66,7 +67,10 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
             result_lines.append(text_format.original_text(line) +
                                 new_line_delimiter * new_line_delimiter_count)
 
-        translate_req = req.translate_req(line)
+        context = file_processor.get_context(items_to_context=all_original_text_items,
+                                             params=core.file_processing_params.context_params, translate_text=line)
+        translate_req = req.translate_req(line, context)
+        all_original_text_items.append(line)
         translate_txt = core.translate(translate_req).result
         translate_txt_format = text_format.translate_text(translate_txt)
         result_lines.append(translate_txt_format + new_line_delimiter * new_line_delimiter_count)

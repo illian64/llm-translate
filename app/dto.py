@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 class TranslateReq(BaseModel):
     text: str
+    context: str | None = ""
     from_lang: str | None = ""
     to_lang: str | None = ""
     translator_plugin: str | None = ""
@@ -16,6 +17,7 @@ class TranslateReq(BaseModel):
 @dataclass
 class TranslateCommonRequest:
     text: str
+    context: str | None
     from_lang: str | None
     to_lang: str | None
     translator_plugin: str | None
@@ -32,8 +34,8 @@ class ProcessingFileDirReq(BaseModel):
     overwrite_processed_files: bool | None
     recursive_sub_dirs: bool
 
-    def translate_req(self, text: str) -> TranslateCommonRequest:
-        return TranslateCommonRequest(text=text, from_lang=self.from_lang, to_lang=self.to_lang,
+    def translate_req(self, text: str, context: str) -> TranslateCommonRequest:
+        return TranslateCommonRequest(text=text, context=context, from_lang=self.from_lang, to_lang=self.to_lang,
                                       translator_plugin=self.translator_plugin)
 
 
