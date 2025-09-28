@@ -15,7 +15,7 @@ class FileProcessTest(TestCase):
     def test_get_context(self):
         items_to_context = ["111", "222", "333", "444", "555"]
 
-        params = FileProcessingContextParams(enabled=True, prompt="Use context: %%context%%", expected_length=9,
+        params = FileProcessingContextParams(enabled=True, prompt="Use context: %%context_text%%", expected_length=9,
                                              include_at_least_one_paragraph=True, paragraph_join_str="\n")
 
         context = file_processor.get_context(items_to_context, params, "000")

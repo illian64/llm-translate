@@ -107,6 +107,6 @@ def get_context(items_to_context: list[str], params: FileProcessingContextParams
         if len(result_list) == 0:
             return None
         else:
-            return params.prompt.replace("%%context%%", params.paragraph_join_str.join(result_list))
+            return params.prompt.replace("%%context_text%%", params.paragraph_join_str.join(result_list))
     else:
         return None
