@@ -72,13 +72,13 @@ http://127.0.0.1:4990/translate?text=hi&from_lang=en&to_lang=ru&context=context&
 * **kobold_cpp** - [проект](https://github.com/LostRuins/koboldcpp), [документация](plugins-translate/kobold_cpp.md).
   Внешний инструмент для работы с моделями.
   Поддерживаются основные популярные модели - Qwen, mistral, gpt-oss и другие.
-  Требуется запустить KoboldCpp, загрузить и открыть в нем необходимую модель.
+  Требуется запустить KoboldCpp, загрузить необходимую модель, настроить и открыть ее.
 
 
 * **lm_studio** - [проект](https://github.com/LostRuins/koboldcpp), [документация](plugins-translate/lm_studio.md).
   Внешний инструмент для работы с моделями.
   Поддерживаются основные популярные модели - Qwen, gemma, mistral, gpt-oss и другие.
-  Требуется запустить LM Studio, загрузить и открыть в нем необходимую модель.
+  Требуется запустить LM Studio, загрузить необходимую модель, настроить и открыть ее.
 
 
 * **madlad_400_ctranslate2** - [проект](https://huggingface.co/docs/transformers/model_doc/madlad-400) (A Multilingual And Document-Level Large Audited Dataset),

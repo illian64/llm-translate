@@ -19,7 +19,7 @@ def start(core: AppCore):
 
         "default_options": {
             "custom_url": "http://127.0.0.1:5001",  #
-            "prompt": "You are professional translator. Translate text from %%from_lang%% to %%to_lang%%. Don't add any notes or any additional info in your answer, write only translate. Text: ",
+            "prompt": "You are a professional translator from %%from_lang%% to %%to_lang%%. Your task is to translate a text provided below.\n%%context_prompt%%\nINSTRUCTION:Carefully analyze the context. Pay special attention to Terminology, Style, Consistency. Provide only the translation. Do not include any additional information, explanations, notes, or comments in your response. The output should be the pure translated text only.\nTEXT TO TRANSLATE:",
             "prompt_postfix": "",
             "prompt_no_think_postfix": False,
         },
