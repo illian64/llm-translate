@@ -43,7 +43,7 @@ async def translate_get(text: str, from_lang: str = "", to_lang: str = "", conte
 
        :param str text: text to translate
 
-       :param context: additional context to translate (if model has context support)
+       :param str context: additional context to translate (if model has context support)
 
        :param str from_lang: from language (2 symbols, like "en").
        May be empty (will be replaced to "default_from_lang" from options)
@@ -89,6 +89,72 @@ async def translate_post(req: dto.TranslateReq) -> dto.TranslateResp:
                                          translator_plugin=req.translator_plugin)
 
     return core.translate(request)
+
+
+@app.post("/translate/sugoi-like")
+async def translate_sugoi_like_post(req: dto.SugoiLikePostReq, from_lang: str = "", to_lang: str = "", context: str = None,
+                                    translator_plugin: str = "") -> list[str]:
+    """
+    Translate text. Request and response like a sugoi translator - https://github.com/leminhyen2/Sugoi-Japanese-Translator/tree/main
+    This allows the query to be used in integration programs such as a Translator++ - http://dreamsavior.net/docs/translator/
+
+    :param req:
+        req.content - list of texts to translation.
+        req.message - for backward compatibility.
+
+    :param str context: additional context to translate (if model has context support)
+
+    :param str from_lang: from language (2 symbols, like "en").
+    May be empty (will be replaced to "default_from_lang" from options)
+
+    :param str to_lang: to language (2 symbols, like "en").
+    May be empty (will be replaced to "default_to_lang" from options)
+
+    :param str translator_plugin: plugin to use. If blank, default will be used.
+    If not initialized (not in "default_translate_plugin" and not in "init_on_start" from options - throw error)
+
+    :return: list of translated texts
+    """
+    response_list: list[str] = []
+    for text in req.content:
+        request = dto.TranslateCommonRequest(text=text, context=context, from_lang=from_lang, to_lang=to_lang,
+                                             translator_plugin=translator_plugin)
+        translate = core.translate(request)
+        if translate.result:
+            response_list.append(translate.result)
+        else:
+            raise ValueError("Error translate text: " + text)
+
+    return response_list
+
+
+@app.get("/translate/sugoi-like")
+async def translate_sugoi_like_post(text: str, from_lang: str = "", to_lang: str = "", context: str = None,
+                                    translator_plugin: str = "") -> dto.SugoiLikeGetResp:
+    """
+    Translate text. Request and response like a sugoi translator - https://github.com/leminhyen2/Sugoi-Japanese-Translator/tree/main
+    This allows the query to be used in integration programs such as a Translator++ - http://dreamsavior.net/docs/translator/
+
+    :param str text: text to translate.
+
+    :param str context: additional context to translate (if model has context support)
+
+    :param str from_lang: from language (2 symbols, like "en").
+    May be empty (will be replaced to "default_from_lang" from options)
+
+    :param str to_lang: to language (2 symbols, like "en").
+    May be empty (will be replaced to "default_to_lang" from options)
+
+    :param str translator_plugin: plugin to use. If blank, default will be used.
+    If not initialized (not in "default_translate_plugin" and not in "init_on_start" from options - throw error)
+
+    :return: list of translated texts
+    """
+    request = dto.TranslateCommonRequest(text=text, context=context, from_lang=from_lang, to_lang=to_lang,
+                                         translator_plugin=translator_plugin)
+    translate = core.translate(request)
+
+    return dto.SugoiLikeGetResp(trans=translate.result)
 
 
 @app.get("/process-files-list")

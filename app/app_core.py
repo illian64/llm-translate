@@ -2,12 +2,8 @@ import os
 import time
 from os import walk
 
-from app import text_splitter, file_processor, log
+from app import text_splitter, file_processor, dto, log
 from app.cache import Cache
-from app.dto import TranslateResp, ProcessingFileDirReq, \
-    ProcessingFileDirResp, TranslatePluginInitInfo, Part, TranslateStruct, FileProcessingPluginInitInfo, \
-    TranslateCommonRequest, ProcessingFileResp, ProcessingFileStruct, ProcessingFileStatus, ProcessingFileDirListResp, \
-    ProcessingFileDirListItemIn, ProcessingFileDirListItemOut
 from app.params import TranslationParams, TextSplitParams, TextProcessParams, CacheParams, FileProcessingParams
 from app.text_processor import pre_process
 from jaa import JaaCore
@@ -30,10 +26,10 @@ class AppCore(JaaCore):
         self.file_processing_params: FileProcessingParams | None = None
 
         self.translators: dict = {}
-        self.initialized_translator_engines: dict[str, TranslatePluginInitInfo] = dict()
+        self.initialized_translator_engines: dict[str, dto.TranslatePluginInitInfo] = dict()
         self.cache: Cache | None = None
 
-        self.files_ext_to_processors: dict[str, list[FileProcessingPluginInitInfo]] = dict()
+        self.files_ext_to_processors: dict[str, list[dto.FileProcessingPluginInitInfo]] = dict()
 
     def process_plugin_manifest(self, modname, manifest):
         if "translate" in manifest:  # collect translate plugins
@@ -42,7 +38,7 @@ class AppCore(JaaCore):
 
         if "file_processing" in manifest and manifest["options"]["enabled"]:  # collect file processing plugins
             for cmd in manifest["file_processing"].keys():
-                init_info: FileProcessingPluginInitInfo = manifest["file_processing"][cmd][0](self)  # init call
+                init_info: dto.FileProcessingPluginInitInfo = manifest["file_processing"][cmd][0](self)  # init call
                 init_info.name = cmd
                 init_info.processing_function = manifest["file_processing"][cmd][1]
                 init_info.processed_file_name_function = manifest["file_processing"][cmd][2]
@@ -76,7 +72,7 @@ class AppCore(JaaCore):
 
         try:
             logger.info("Try to init translation plugin '%s'...", translator_engine)
-            model_init_info: TranslatePluginInitInfo = self.translators[translator_engine][0](self)
+            model_init_info: dto.TranslatePluginInitInfo = self.translators[translator_engine][0](self)
             self.initialized_translator_engines[translator_engine] = model_init_info
             logger.info("Success init translation plugin: '%s'.", translator_engine)
 
@@ -116,21 +112,21 @@ class AppCore(JaaCore):
 
         return translator_plugin
 
-    def get_from_language(self, req_lang: str, plugin_name: str) -> str:
-        if req_lang == "" or req_lang == "--":
+    def get_from_language(self, lang: str, plugin_name: str) -> str:
+        if lang == "" or lang == "--" or lang == "auto":
             return self.get_translation_params(plugin_name).default_from_lang
         else:
-            return req_lang
+            return lang
 
-    def get_to_language(self, req_lang: str, plugin_name: str) -> str:
-        if req_lang == "" or req_lang == "--":
+    def get_to_language(self, lang: str, plugin_name: str) -> str:
+        if lang == "" or lang == "--" or lang == "auto":
             return self.get_translation_params(plugin_name).default_to_lang
         else:
-            return req_lang
+            return lang
 
-    def translate(self, req: TranslateCommonRequest) -> TranslateResp:
+    def translate(self, req: dto.TranslateCommonRequest) -> dto.TranslateResp:
         if req.text == '':
-            return TranslateResp(result='', parts=[], error=None)
+            return dto.TranslateResp(result='', parts=[], error=None)
 
         try:
             req.translator_plugin = self.get_translator_plugin(req.translator_plugin)
@@ -144,7 +140,7 @@ class AppCore(JaaCore):
             else:
                 processed_text = req.text
 
-            text_parts: list[Part] = text_splitter.split_text(processed_text,
+            text_parts: list[dto.Part] = text_splitter.split_text(processed_text,
                                                               self.get_text_split_params(plugin_info.plugin_name),
                                                               req.from_lang)
             for text_part in text_parts:
@@ -153,9 +149,9 @@ class AppCore(JaaCore):
 
             self.cache.cache_read(req, text_parts, self.cache_params, plugin_info.model_name)
 
-            translate_struct = TranslateStruct(req=req, processed_text=processed_text, parts=text_parts)
+            translate_struct = dto.TranslateStruct(req=req, processed_text=processed_text, parts=text_parts)
             if translate_struct.need_to_translate():
-                translate_struct: TranslateStruct = self.translators[req.translator_plugin][1](self, translate_struct)
+                translate_struct: dto.TranslateStruct = self.translators[req.translator_plugin][1](self, translate_struct)
                 self.cache.cache_write(req, translate_struct.parts, self.cache_params, plugin_info.model_name)
                 if self.get_translation_params(plugin_info.plugin_name).sleep_after_translate > 0:
                     time.sleep(self.get_translation_params(plugin_info.plugin_name).sleep_after_translate)
@@ -167,15 +163,15 @@ class AppCore(JaaCore):
             else:
                 translate_text = req.text
 
-            return TranslateResp(result=translate_text, parts=translate_parts, error=None)
+            return dto.TranslateResp(result=translate_text, parts=translate_parts, error=None)
         except ValueError as ve:
-            return TranslateResp(result=None, parts=None, error=ve.args[0])
+            return dto.TranslateResp(result=None, parts=None, error=ve.args[0])
         except Exception as e:
             log.log_exception(f"Translate error {repr(req)}", e)
-            return TranslateResp(result=None, parts=None, error=getattr(e, 'message', repr(e)))
+            return dto.TranslateResp(result=None, parts=None, error=getattr(e, 'message', repr(e)))
 
-    def process_files_list(self, recursive_sub_dirs: bool) -> ProcessingFileDirListResp:
-        files_in: list[ProcessingFileDirListItemIn] = []
+    def process_files_list(self, recursive_sub_dirs: bool) -> dto.ProcessingFileDirListResp:
+        files_in: list[dto.ProcessingFileDirListItemIn] = []
         for root, dirs, file_names in os.walk(self.file_processing_params.directory_in):
             for file_name in file_names:
                 name, extension = os.path.splitext(file_name)
@@ -189,7 +185,7 @@ class AppCore(JaaCore):
                 except ValueError as ve:
                     file_processor_error = "error: " + ve.args[0]
 
-                files_in.append(ProcessingFileDirListItemIn(
+                files_in.append(dto.ProcessingFileDirListItemIn(
                     file_with_path=file_processor.get_file_with_path_for_list(
                         self.file_processing_params.directory_in, root.replace(os.sep, "/"), file_name),
                     file_processor=processor_name, file_processor_error=file_processor_error))
@@ -198,21 +194,21 @@ class AppCore(JaaCore):
                 break
 
         # output directory files list
-        files_out: list[ProcessingFileDirListItemOut] = []
+        files_out: list[dto.ProcessingFileDirListItemOut] = []
         for root, dirs, file_names in walk(self.file_processing_params.directory_out):
             for file_name in file_names:
-                files_out.append(ProcessingFileDirListItemOut(
+                files_out.append(dto.ProcessingFileDirListItemOut(
                     file_with_path=file_processor.get_file_with_path_for_list(self.file_processing_params.directory_out,
                                                                               root.replace(os.sep, "/"), file_name)))
             if not recursive_sub_dirs:
                 break
 
-        return ProcessingFileDirListResp(files_in=files_in, files_out=files_out,
-                                         directory_in=self.file_processing_params.directory_in,
-                                         directory_out=self.file_processing_params.directory_out,
-                                         error=None)
+        return dto.ProcessingFileDirListResp(files_in=files_in, files_out=files_out,
+                                             directory_in=self.file_processing_params.directory_in,
+                                             directory_out=self.file_processing_params.directory_out,
+                                             error=None)
 
-    def process_files(self, req: ProcessingFileDirReq) -> ProcessingFileDirResp:
+    def process_files(self, req: dto.ProcessingFileDirReq) -> dto.ProcessingFileDirResp:
         try:
             req.translator_plugin = self.get_translator_plugin(req.translator_plugin)
             plugin_name = self.initialized_translator_engines[req.translator_plugin].plugin_name
@@ -228,21 +224,21 @@ class AppCore(JaaCore):
             if req.overwrite_processed_files is None:
                 req.overwrite_processed_files = self.file_processing_params.overwrite_processed_files
 
-            files: list[ProcessingFileResp] = []
+            files: list[dto.ProcessingFileResp] = []
             for root, dirs, file_names in walk(req.directory_in):
                 for file_name in file_names:
                     files.append(self.process_file(req, root, file_name))
                 if not req.recursive_sub_dirs:
                     break
 
-            return ProcessingFileDirResp(files, "")
+            return dto.ProcessingFileDirResp(files, "")
         except ValueError as ve:
-            return ProcessingFileDirResp(files=list(), error=ve.args[0])
+            return dto.ProcessingFileDirResp(files=list(), error=ve.args[0])
         except Exception as e:
             log.log_exception("Error proces files: ", e)
-            return ProcessingFileDirResp(files=list(), error=getattr(e, 'message', repr(e)))
+            return dto.ProcessingFileDirResp(files=list(), error=getattr(e, 'message', repr(e)))
 
-    def process_file(self, req: ProcessingFileDirReq, root: str, file_name: str) -> ProcessingFileResp:
+    def process_file(self, req: dto.ProcessingFileDirReq, root: str, file_name: str) -> dto.ProcessingFileResp:
         try:
             name, extension = os.path.splitext(file_name)
 
@@ -251,14 +247,14 @@ class AppCore(JaaCore):
             req_processor = req.file_processors.get(extension) if req.file_processors else None
             processor = self.get_file_processor(extension, req_processor)
             if processor is None:
-                return ProcessingFileResp(file_in=file_name, file_out="",
+                return dto.ProcessingFileResp(file_in=file_name, file_out="",
                                           path_file_in=f'{root}/{file_name}'.replace(os.sep, "/"),
-                                          path_file_out=None, status=ProcessingFileStatus.TYPE_NOT_SUPPORT,
+                                          path_file_out=None, status=dto.ProcessingFileStatus.TYPE_NOT_SUPPORT,
                                           file_processor="", message=None)
 
             # calculate output path and validate file exists (depend on request)
             path_out = root.replace(req.directory_in, req.directory_out)
-            file_struct = ProcessingFileStruct(
+            file_struct = dto.ProcessingFileStruct(
                 path_in=root, path_out=path_out, file_name=name,
                 file_ext=extension, file_name_ext=file_name, file_processor=processor.name)
 
@@ -268,7 +264,7 @@ class AppCore(JaaCore):
                     and os.path.isfile(f'{path_out}/{processed_file_name}')):
                 return file_processor.get_processing_file_resp(file_struct=file_struct, file_out=processed_file_name,
                                                                file_processor=processor.name,
-                                                               status=ProcessingFileStatus.TRANSLATE_ALREADY_EXISTS)
+                                                               status=dto.ProcessingFileStatus.TRANSLATE_ALREADY_EXISTS)
             else:
                 logger.info("Start processing file %s/%s", root.replace(os.sep, "/"), file_name)
                 os.makedirs(file_struct.path_out, exist_ok=True)  # make output directory structure
@@ -287,11 +283,11 @@ class AppCore(JaaCore):
             log.log_exception(f'Error with processing file {file_name}', e)
             return file_processor.get_processing_file_resp_error(file_in=file_name, path_in=root, error_msg=repr(e))
 
-    def get_file_processor(self, extension: str, req_processor: str | None) -> FileProcessingPluginInitInfo | None:
+    def get_file_processor(self, extension: str, req_processor: str | None) -> dto.FileProcessingPluginInitInfo | None:
         if not extension or extension == "":  # skip files without extension
             return None
 
-        processors: list[FileProcessingPluginInitInfo] = self.files_ext_to_processors.get(extension, None)
+        processors: list[dto.FileProcessingPluginInitInfo] = self.files_ext_to_processors.get(extension, None)
         if not processors:
             return None
 
@@ -306,7 +302,7 @@ class AppCore(JaaCore):
             return processors[0]
 
         # try to find default processor
-        default_processors_list: list[FileProcessingPluginInitInfo] = []
+        default_processors_list: list[dto.FileProcessingPluginInitInfo] = []
         for processor in processors:
             options = self.plugin_options(processor.plugin_name)
             if options and options.get('default_extension_processor'):
