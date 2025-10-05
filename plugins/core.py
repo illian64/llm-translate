@@ -66,7 +66,7 @@ manifest = {
             "overwrite_processed_files": True,
             "context": {
                 "enabled": True,
-                "context_message": "Use the given context to improve the quality and consistency of the translation. Don't include this context or any piece in your answer.\nCONTEXT (preceding text):\"\"\"\n%%context_text%%\n\"\"\"\n",
+                "prompt": "Use the given context to improve the quality and consistency of the translation. Don't include this context or any piece in your answer.\nCONTEXT (preceding text):\"\"\"\n%%context_text%%\n\"\"\"\n",
                 "expected_length": 500,
                 "include_at_least_one_paragraph": True,
                 "paragraph_join_str": "\n",

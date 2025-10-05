@@ -172,3 +172,14 @@ class TranslateStruct:
                 return True
 
         return False
+
+
+@dataclass
+class SugoiLikePostReq(BaseModel):
+    content: list[str]
+    message: str
+
+
+@dataclass
+class SugoiLikeGetResp:
+    trans: str
