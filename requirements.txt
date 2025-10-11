@@ -2,6 +2,8 @@
 torch
 torchvision
 torchaudio
+openai-whisper == 20250625
+pysrt == 1.1.2
 
 uvicorn == 0.34.2
 uvicorn[standard] == 0.34.2

@@ -20,7 +20,7 @@ def start(core: AppCore):
 
         "default_options": {
             "custom_url": "http://localhost:1234",  #
-            "prompt": "You are a professional translator. Your task is to translate a text provided below from %%from_lang%% to %%to_lang%%.\n%%context_prompt%%\nINSTRUCTION:Carefully analyze the context. Pay special attention to Terminology, Style, Consistency. Provide only the translation. Do not include any additional information, explanations, notes, or comments in your response. The output should be the pure translated text only.\nTEXT TO TRANSLATE:",
+            "prompt": "You are a professional translator. Your task is to translate a text (or word) provided below from %%from_lang%% to %%to_lang%%.\n%%context_prompt%%\nINSTRUCTION:Carefully analyze the context. Pay special attention to Terminology, Style, Consistency. Provide only the translation. Do not include any additional information, explanations, notes, or comments in your response. The output should be the pure translated text only.\nTEXT TO TRANSLATE:",
             "prompt_postfix": "",
             "prompt_no_think_postfix": False,
             "use_library_for_request": True,

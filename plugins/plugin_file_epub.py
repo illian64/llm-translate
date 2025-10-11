@@ -39,7 +39,7 @@ def start(core: AppCore):
         },
 
         "file_processing": {
-            "file_epub_translate": (init, file_processing, processed_file_name)
+            "file_epub_translate": (init, file_processing, processed_file_name, after_processing)
         }
     }
 
@@ -96,3 +96,7 @@ def processed_file_name(core: AppCore, file_struct: ProcessingFileStruct, req: P
     options = core.plugin_options(plugin_name)
 
     return file_processor.file_name_from_template(file_struct=file_struct, req=req, options=options)
+
+
+def after_processing(core: AppCore) -> None:
+    pass

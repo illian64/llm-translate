@@ -32,7 +32,7 @@ def start(core: AppCore):
         },
 
         "file_processing": {
-            "file_txt_translate": (init, file_processing, processed_file_name)
+            "file_txt_translate": (init, file_processing, processed_file_name, after_processing)
         }
     }
 
@@ -84,9 +84,10 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
 
 def processed_file_name(core: AppCore, file_struct: ProcessingFileStruct, req: ProcessingFileDirReq) -> str:
     options = core.plugin_options(plugin_name)
+    ext = "md" if options["markdown_output"] else None
 
-    file_name = file_processor.file_name_from_template(file_struct=file_struct, req=req, options=options)
-    if options["markdown_output"]:
-        file_name = file_name[:-3] + "md"
+    return file_processor.file_name_from_template(file_struct=file_struct, req=req, options=options, replace_ext=ext)
 
-    return file_name
+
+def after_processing(core: AppCore) -> None:
+    pass

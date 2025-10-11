@@ -92,6 +92,13 @@ class FileProcessingTextFormat:
         return self.translate_prefix + text + self.translate_postfix
 
 
+@dataclass
+class RestLogParams:
+    translate_req_text: bool
+    translate_resp_text: bool
+    translate_validation_errors: bool
+
+
 def read_plugin_translate_params(manifest: dict):
     manifest["options"]["translation_params_struct"] = read_translation_params(manifest)
     manifest["options"]["text_split_params_struct"] = read_text_split_params(manifest)
@@ -199,6 +206,16 @@ def read_plugin_file_processing_text_format(options: dict):
         original_postfix=options["text_format"]["original_postfix"],
         translate_prefix=options["text_format"]["translate_prefix"],
         translate_postfix=options["text_format"]["translate_postfix"],
+    )
+
+
+def read_rest_log_params(manifest: dict) -> RestLogParams:
+    options = manifest["options"]
+
+    return RestLogParams(
+        translate_req_text=options["rest_log_params"]["translate_req_text"],
+        translate_resp_text=options["rest_log_params"]["translate_resp_text"],
+        translate_validation_errors=options["rest_log_params"]["translate_validation_errors"],
     )
 
 

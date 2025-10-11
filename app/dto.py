@@ -130,6 +130,7 @@ class FileProcessingPluginInitInfo:
     plugin_name: str
     processing_function: Callable[[Any, ProcessingFileStruct, ProcessingFileDirReq], ProcessingFileResp]
     processed_file_name_function: Callable[[Any, ProcessingFileStruct, ProcessingFileDirReq], str]
+    after_processing_function: Callable[[Any], None]
     supported_extensions: set[str]  # lower case
 
     def __init__(self, plugin_name: str, supported_extensions: set[str]):
