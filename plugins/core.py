@@ -72,6 +72,12 @@ manifest = {
                 "paragraph_join_str": "\n",
             },
         },
+
+        "rest_log_params": {
+            "translate_req_text": True,
+            "translate_resp_text": True,
+            "translate_validation_errors": True,
+        }
     },
 }
 
@@ -91,5 +97,6 @@ def start_with_options(core: AppCore, manifest: dict):
     core.text_process_params = params.read_text_process_params(manifest)
     core.cache_params = params.read_cache_params(manifest)
     core.file_processing_params = params.read_file_processing_params(manifest)
+    core.rest_log_params = params.read_rest_log_params(manifest)
 
     return manifest

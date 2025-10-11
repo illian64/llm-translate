@@ -4,7 +4,8 @@ from os import walk
 
 from app import text_splitter, file_processor, dto, log
 from app.cache import Cache
-from app.params import TranslationParams, TextSplitParams, TextProcessParams, CacheParams, FileProcessingParams
+from app.params import TranslationParams, TextSplitParams, TextProcessParams, CacheParams, FileProcessingParams, \
+    RestLogParams
 from app.text_processor import pre_process
 from jaa import JaaCore
 
@@ -24,6 +25,7 @@ class AppCore(JaaCore):
         self.text_process_params: TextProcessParams | None = None
         self.cache_params: CacheParams | None = None
         self.file_processing_params: FileProcessingParams | None = None
+        self.rest_log_params: RestLogParams | None = None
 
         self.translators: dict = {}
         self.initialized_translator_engines: dict[str, dto.TranslatePluginInitInfo] = dict()
@@ -42,6 +44,7 @@ class AppCore(JaaCore):
                 init_info.name = cmd
                 init_info.processing_function = manifest["file_processing"][cmd][1]
                 init_info.processed_file_name_function = manifest["file_processing"][cmd][2]
+                init_info.after_processing_function = manifest["file_processing"][cmd][3]
                 logger.info("Init file processing plugin '%s' for next file extensions: %s",
                             init_info.name, init_info.supported_extensions)
                 for ext in init_info.supported_extensions:
@@ -163,6 +166,12 @@ class AppCore(JaaCore):
             else:
                 translate_text = req.text
 
+            # log request / response text
+            if self.rest_log_params is not None and (self.rest_log_params.translate_resp_text or self.rest_log_params.translate_req_text):
+                log_source = "\nSource:\n" + req.text if self.rest_log_params.translate_req_text else ""
+                log_translate = "\nResult:\n" + translate_text if self.rest_log_params.translate_resp_text else ""
+                logger.info(f"Translate text.{log_source}{log_translate}")
+
             return dto.TranslateResp(result=translate_text, parts=translate_parts, error=None)
         except ValueError as ve:
             return dto.TranslateResp(result=None, parts=None, error=ve.args[0])
@@ -237,6 +246,11 @@ class AppCore(JaaCore):
         except Exception as e:
             log.log_exception("Error proces files: ", e)
             return dto.ProcessingFileDirResp(files=list(), error=getattr(e, 'message', repr(e)))
+        finally:
+            # clear memory (GPU or RAM) for heavy file processing plugins
+            for processors_list in self.files_ext_to_processors.values():
+                for processor in processors_list:
+                    processor.after_processing_function(self)
 
     def process_file(self, req: dto.ProcessingFileDirReq, root: str, file_name: str) -> dto.ProcessingFileResp:
         try:

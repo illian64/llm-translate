@@ -15,7 +15,8 @@ def processed_file_name_def(file_struct: ProcessingFileStruct, req: ProcessingFi
     return f'{file_struct.file_name}__{from_lang_part}_{req.to_lang}.{file_struct.file_ext}'
 
 
-def file_name_from_template(file_struct: ProcessingFileStruct, req: ProcessingFileDirReq, options: dict) -> str:
+def file_name_from_template(file_struct: ProcessingFileStruct, req: ProcessingFileDirReq, options: dict,
+                            replace_ext: str = None) -> str:
     """
     Generate output file name from template. Template in options, for preserve original and not.
     Special parameters in template:
@@ -26,14 +27,38 @@ def file_name_from_template(file_struct: ProcessingFileStruct, req: ProcessingFi
     :param file_struct: struct with file info
     :param req: file process request
     :param options: template parameters source
+    :param replace_ext: replace ext, if not None or empty, instead file_struct.file_ext
     :return: output file name
     """
+    file_ext = file_struct.file_ext if replace_ext is None or replace_ext == "" else replace_ext
     template_dict = options["output_file_name_template"]
     template = template_dict["preserve_original"] if req.preserve_original_text else template_dict["without_original"]
+
+    return file_name_from_predefined_template(file_struct=file_struct, req=req,
+                                              template=template, replace_ext=replace_ext)
+
+
+def file_name_from_predefined_template(file_struct: ProcessingFileStruct, req: ProcessingFileDirReq,
+                                       template: str, replace_ext: str = None) -> str:
+    """
+    Generate output file name from template. Template in options, for preserve original and not.
+    Special parameters in template:
+    %%source%% - original file name
+    %%from_lang%% - source language
+    %%to_lang%% - target language
+
+    :param file_struct: struct with file info
+    :param req: file process request
+    :param template: template string
+    :param replace_ext: replace ext, if not None or empty, instead file_struct.file_ext
+    :return: output file name
+    """
+    file_ext = file_struct.file_ext if replace_ext is None or replace_ext == "" else replace_ext
+
     return ((template.replace("%%source%%", file_struct.file_name)
-                 .replace("%%from_lang%%", req.from_lang)
-                 .replace("%%to_lang%%", req.to_lang))
-            + "." + file_struct.file_ext)
+             .replace("%%from_lang%%", req.from_lang)
+             .replace("%%to_lang%%", req.to_lang))
+            + "." + file_ext)
 
 
 def get_file_with_path_for_list(init_dir: str, root: str, file_name: str) -> str:

@@ -2,12 +2,16 @@ import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
+from starlette.responses import JSONResponse
 from starlette.staticfiles import StaticFiles
 
-from app import dto, log
+from app import dto, log, cuda
 from app.app_core import AppCore
-from app.cuda import cuda_info
+
+APP_VERSION = "0.8.0"
+
 
 core: AppCore
 logger = log.logger()
@@ -18,7 +22,7 @@ async def lifespan(fast_api: FastAPI):
     logger.info("Starting llm-translate")
 
     app.mount('/', StaticFiles(directory='static', html=True), name='static')
-    cuda_info()
+    cuda.cuda_info()
 
     try:
         global core
@@ -33,6 +37,14 @@ async def lifespan(fast_api: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
+    if core.rest_log_params is not None and core.rest_log_params.translate_validation_errors:
+        logger.error(f"Error validating request: {request}: {exc_str}")
+    return JSONResponse(content={"error": exc_str}, status_code=status.HTTP_400_BAD_REQUEST)
 
 
 @app.get("/translate")
@@ -95,7 +107,7 @@ async def translate_post(req: dto.TranslateReq) -> dto.TranslateResp:
 async def translate_sugoi_like_post(req: dto.SugoiLikePostReq, from_lang: str = "", to_lang: str = "", context: str = None,
                                     translator_plugin: str = "") -> list[str]:
     """
-    Translate text. Request and response like a sugoi translator - https://github.com/leminhyen2/Sugoi-Japanese-Translator/tree/main
+    Translate text. Request and response like a sugoi translator - https://github.com/leminhyen2/Sugoi-Japanese-Translator
     This allows the query to be used in integration programs such as a Translator++ - http://dreamsavior.net/docs/translator/
 
     :param req:
@@ -132,7 +144,7 @@ async def translate_sugoi_like_post(req: dto.SugoiLikePostReq, from_lang: str = 
 async def translate_sugoi_like_post(text: str, from_lang: str = "", to_lang: str = "", context: str = None,
                                     translator_plugin: str = "") -> dto.SugoiLikeGetResp:
     """
-    Translate text. Request and response like a sugoi translator - https://github.com/leminhyen2/Sugoi-Japanese-Translator/tree/main
+    Translate text. Request and response like a sugoi translator - https://github.com/leminhyen2/Sugoi-Japanese-Translator
     This allows the query to be used in integration programs such as a Translator++ - http://dreamsavior.net/docs/translator/
 
     :param str text: text to translate.
