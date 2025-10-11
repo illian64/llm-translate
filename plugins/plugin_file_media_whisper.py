@@ -32,8 +32,10 @@ def start(core: AppCore):
             "no_speech_threshold": 0.6,
             "word_timestamps": True,
             "hallucination_silence_threshold": 1,
-            "prompt": "",
+            "carry_initial_prompt": False,
             "initial_prompt": "",
+            "compression_ratio_threshold": 2.4,
+            "logprob_threshold": -1.0,
 
             "output_file_name_template": "%%source%%.src_sub",
         },
@@ -84,8 +86,10 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
                                   no_speech_threshold=options["no_speech_threshold"],
                                   word_timestamps=options["word_timestamps"],
                                   hallucination_silence_threshold=options["hallucination_silence_threshold"],
-                                  prompt=options["prompt"],
+                                  carry_initial_prompt=options["carry_initial_prompt"],
                                   initial_prompt=options["initial_prompt"],
+                                  compression_ratio_threshold=options["compression_ratio_threshold"],
+                                  logprob_threshold=options["logprob_threshold"]
                                   )
 
     if transcribe:

@@ -107,7 +107,7 @@ async def translate_post(req: dto.TranslateReq) -> dto.TranslateResp:
 async def translate_sugoi_like_post(req: dto.SugoiLikePostReq, from_lang: str = "", to_lang: str = "", context: str = None,
                                     translator_plugin: str = "") -> list[str]:
     """
-    Translate text. Request and response like a sugoi translator - https://github.com/leminhyen2/Sugoi-Japanese-Translator/tree/main
+    Translate text. Request and response like a sugoi translator - https://github.com/leminhyen2/Sugoi-Japanese-Translator
     This allows the query to be used in integration programs such as a Translator++ - http://dreamsavior.net/docs/translator/
 
     :param req:
@@ -144,7 +144,7 @@ async def translate_sugoi_like_post(req: dto.SugoiLikePostReq, from_lang: str = 
 async def translate_sugoi_like_post(text: str, from_lang: str = "", to_lang: str = "", context: str = None,
                                     translator_plugin: str = "") -> dto.SugoiLikeGetResp:
     """
-    Translate text. Request and response like a sugoi translator - https://github.com/leminhyen2/Sugoi-Japanese-Translator/tree/main
+    Translate text. Request and response like a sugoi translator - https://github.com/leminhyen2/Sugoi-Japanese-Translator
     This allows the query to be used in integration programs such as a Translator++ - http://dreamsavior.net/docs/translator/
 
     :param str text: text to translate.

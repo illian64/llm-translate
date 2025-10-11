@@ -22,7 +22,7 @@ def start(core: AppCore):
                 "translate_prefix": "<i>",
                 "translate_postfix": "</i>",
             },
-            "remove_src_postfix": ".src_sub",
+            "remove_src_filename_postfix": ".src_sub",
             "translate_delimiter": "\n",
             "output_file_name_template": {
                 "preserve_original": "%%source%%.%%from_lang%%_%%to_lang%%",
@@ -73,7 +73,7 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
 
 def processed_file_name(core: AppCore, file_struct: ProcessingFileStruct, req: ProcessingFileDirReq) -> str:
     options = core.plugin_options(plugin_name)
-    src_postfix = options["remove_src_postfix"]
+    src_postfix = options["remove_src_filename_postfix"]
 
     return file_processor.file_name_from_template(file_struct=file_struct, req=req, options=options).replace(src_postfix + ".", ".")
 
