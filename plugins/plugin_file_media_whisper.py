@@ -38,24 +38,24 @@ def start(core: AppCore):
             "logprob_threshold": -1.0,
 
             "output_file_name_template": "%%source%%.src_sub",
+
+            "default_extension_processor": {
+                "mpeg": True,
+                "mpg": True,
+                "mp4": True,
+                "mp3": True,
+                "avi": True,
+                "wav": True,
+                "mkv": True,
+                "vob": True,
+                "ac3": True,
+                "mpa": True,
+                "ogg": True,
+            },
         },
 
         "file_processing": {
             "file_media_whisper_processing": (init, file_processing, processed_file_name, after_processing)
-        },
-
-        "default_extension_processor": {
-            "mpeg": True,
-            "mpg": True,
-            "mp4": True,
-            "mp3": True,
-            "avi": True,
-            "wav": True,
-            "mkv": True,
-            "vob": True,
-            "ac3": True,
-            "mpa": True,
-            "ogg": True,
         },
     }
 

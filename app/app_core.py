@@ -248,9 +248,12 @@ class AppCore(JaaCore):
             return dto.ProcessingFileDirResp(files=list(), error=getattr(e, 'message', repr(e)))
         finally:
             # clear memory (GPU or RAM) for heavy file processing plugins
-            for processors_list in self.files_ext_to_processors.values():
-                for processor in processors_list:
-                    processor.after_processing_function(self)
+            try:
+                for processors_list in self.files_ext_to_processors.values():
+                    for processor in processors_list:
+                        processor.after_processing_function(self)
+            except Exception as fe:
+                log.log_exception("Error after processing function: ", fe)
 
     def process_file(self, req: dto.ProcessingFileDirReq, root: str, file_name: str) -> dto.ProcessingFileResp:
         try:

@@ -4,7 +4,7 @@ WORKDIR /app
 
 ENV PYTHONUNBUFFERED=1
 
-RUN apt update && apt install -y python3-venv python3-pip
+RUN apt update && apt install -y python3-venv python3-pip ffmpeg
 
 COPY requirements.txt .
 
@@ -13,7 +13,6 @@ RUN ./venv/bin/pip3 install --no-cache-dir -r requirements.txt
 
 COPY jaa.py ./
 COPY main.py ./
-COPY log_config.yaml ./
 COPY app ./app
 COPY plugins ./plugins
 COPY static ./static
