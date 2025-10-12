@@ -54,6 +54,8 @@ async function process_files() {
     const toLang = document.getElementById('to_lang_select').value;
     const plugin = document.getElementById('plugin').value;
 
+    errorText.innerHTML = ""
+
     const reqBody = JSON.stringify({
         from_lang: fromLang, to_lang: toLang, translator_plugin: plugin,
         preserve_original_text: preserve_original_text, overwrite_processed_files: overwrite_processed_files,

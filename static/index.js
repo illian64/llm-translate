@@ -12,6 +12,8 @@ async function translateText() {
     const toLang = document.getElementById('to_lang_select').value;
     const plugin = document.getElementById('plugin').value;
 
+    errorText.innerHTML = ""
+
     try {
         const reqBody = JSON.stringify({
             text: text, from_lang: fromLang, to_lang: toLang,
