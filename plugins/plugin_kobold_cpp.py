@@ -46,7 +46,7 @@ def init(core: AppCore) -> TranslatePluginInitInfo:
     url_model = options['custom_url'] + "/api/v1/model"
     response_model = get_json_resp(url_model)
     global model_name
-    model_name = response_model["result"]
+    model_name = response_model["result"].replace("koboldcpp/", "").lower()
 
     return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=model_name)
 

@@ -53,7 +53,7 @@ def init(core: AppCore) -> TranslatePluginInitInfo:
         lmstudio.configure_default_client(custom_url.replace("http://", ""))
         loaded_models = lmstudio.list_loaded_models("llm")
         if len(loaded_models) > 0:
-            model_name = loaded_models[0].identifier
+            model_name = loaded_models[0].identifier.lower()
 
             global llm_model
             llm_model = lmstudio.llm(model_name)
@@ -65,7 +65,7 @@ def init(core: AppCore) -> TranslatePluginInitInfo:
         req = translate_func.get_open_ai_request(prompt, "init")
         resp = translate_func.post_request(req, options['custom_url'] + "/v1/chat/completions")
 
-        model_name = model_name=resp["model"]
+        model_name = model_name=resp["model"].lower()
 
     return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=model_name)
 
