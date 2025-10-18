@@ -77,7 +77,7 @@ class AppCore(JaaCore):
             logger.info("Try to init translation plugin '%s'...", translator_engine)
             model_init_info: dto.TranslatePluginInitInfo = self.translators[translator_engine][0](self)
             self.initialized_translator_engines[translator_engine] = model_init_info
-            logger.info("Success init translation plugin: '%s'.", translator_engine)
+            logger.info("Success init translation plugin: '%s'. Model: %s", translator_engine, model_init_info.model_name)
 
         except Exception as e:
             logger.error("Error init translation plugin '%s'...", translator_engine, e)

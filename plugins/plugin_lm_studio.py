@@ -11,6 +11,7 @@ from app.lang_dict import get_lang_by_2_chars_code
 
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 llm_model: LLM | None = None
+model_name: str = ""
 
 
 def start(core: AppCore):
@@ -24,6 +25,9 @@ def start(core: AppCore):
             "prompt_postfix": "",
             "prompt_no_think_postfix": False,
             "use_library_for_request": True,
+            "special_prompt_for_model": {
+                "my_model_name": "special prompt"
+            },
         },
 
         "translate": {
@@ -43,16 +47,16 @@ def init(core: AppCore) -> TranslatePluginInitInfo:
     options = core.plugin_options(plugin_name)
     custom_url: str = options['custom_url']
     use_library_for_request = options["use_library_for_request"]
+
+    global model_name
     if use_library_for_request:
         lmstudio.configure_default_client(custom_url.replace("http://", ""))
         loaded_models = lmstudio.list_loaded_models("llm")
         if len(loaded_models) > 0:
-            model_identifier = loaded_models[0].identifier
+            model_name = loaded_models[0].identifier.lower()
 
             global llm_model
-            llm_model = lmstudio.llm(model_identifier)
-
-            return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=model_identifier)
+            llm_model = lmstudio.llm(model_name)
         else:
             raise ValueError('List loaded models is empty. Please load model before init this plugin')
     else:
@@ -61,7 +65,9 @@ def init(core: AppCore) -> TranslatePluginInitInfo:
         req = translate_func.get_open_ai_request(prompt, "init")
         resp = translate_func.post_request(req, options['custom_url'] + "/v1/chat/completions")
 
-        return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=resp["model"])
+        model_name = model_name=resp["model"].lower()
+
+    return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=model_name)
 
 
 def translate(core: AppCore, ts: TranslateStruct) -> TranslateStruct:
@@ -70,10 +76,13 @@ def translate(core: AppCore, ts: TranslateStruct) -> TranslateStruct:
     from_lang_name = get_lang_by_2_chars_code(ts.req.from_lang)
     to_lang_name = get_lang_by_2_chars_code(ts.req.to_lang)
 
-    prompt = translate_func.generate_prompt(prompt_param=options["prompt"], from_lang_name=from_lang_name,
+    special_prompt_for_model: str | None = options["special_prompt_for_model"].get(model_name)
+    prompt_param = special_prompt_for_model if special_prompt_for_model else options["prompt"]
+
+    prompt = translate_func.generate_prompt(prompt_param=prompt_param, from_lang_name=from_lang_name,
                                             to_lang_name=to_lang_name, postfix_param=options["prompt_postfix"],
                                             prompt_no_think_postfix_param=options['prompt_no_think_postfix'],
-                                            context=ts.req.context)
+                                            context=ts.req.context, )
     use_library_for_request = options["use_library_for_request"]
 
     for part in tqdm(ts.parts, unit=params.tp.unit, ascii=params.tp.ascii, desc=params.tp.desc):
