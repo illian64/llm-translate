@@ -1,16 +1,16 @@
 import datetime
 import gc
-import inspect
 import os
 
 import torch
 from nemo.collections.asr.models import ASRModel, EncDecRNNTModel
 from pydub import AudioSegment
 
-from app import file_processor, cuda
+from app import file_processor, cuda, log
 from app.app_core import AppCore
 from app.dto import ProcessingFileDirReq, ProcessingFileResp, FileProcessingPluginInitInfo, ProcessingFileStruct
 
+logger = log.logger()
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
 model: EncDecRNNTModel | None = None
@@ -98,14 +98,19 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
     audio.export(resampled_audio_file, format="wav", parameters=["-ar", "16000", "-ac", "1"])
 
     try:
-        # need to get function params - canary model supports "source_lang", parapet model - doesn't
-        param_names = [name for name, _ in inspect.signature(model.transcribe).parameters.items()]
-        if "source_lang" in param_names and "target_lang" in param_names:
+
+        try: # canary model supports "source_lang", parapet model - doesn't
             transcribe = model.transcribe(audio=[resampled_audio_file], source_lang=req.from_lang, target_lang=req.from_lang,
                                           timestamps=True, batch_size=options["batch_size"])
-        else:
-            transcribe = model.transcribe(audio=[resampled_audio_file],
-                                          timestamps=True, batch_size=options["batch_size"])
+        except Exception as possible_param_exc:
+            if "argument 'source_lang'" in str(possible_param_exc) or "argument 'target_lang'" in str(possible_param_exc):
+                logger.info("It seems the model " + options["model"] + " does not support source_lang / target_lang params. Result text wiil be in english. Try to repeat request without params.")
+                transcribe = model.transcribe(audio=[resampled_audio_file],
+                                                timestamps=True, batch_size=options["batch_size"])
+            else:
+                log.log_exception("Error transcribe.", possible_param_exc)
+                transcribe = None
+
         if not transcribe or not isinstance(transcribe, list) or not transcribe[0] or not hasattr(transcribe[0], 'timestamp') or not transcribe[0].timestamp or 'segment' not in transcribe[0].timestamp:
             return file_processor.get_processing_file_resp_error(
                 file_in=file_struct.file_name_ext, path_in=file_struct.path_in, error_msg="Can't get transcribe")
@@ -117,7 +122,7 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
             out_file_name = processed_file_name(core=core, file_struct=file_struct, req=req)
             with open(file_struct.path_file_out(out_file_name), "w") as f:
                 f.write(srt_content)
-            if options["translate_after_processing"]:
+            if options["translate_after_processing"] and req.from_lang != req.to_lang:
                 return translate_after_processing(core=core, req=req, file_name_ext=out_file_name)
             else:
                 return file_processor.get_processing_file_resp_ok(file_struct=file_struct, file_out=out_file_name)

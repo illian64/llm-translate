@@ -168,8 +168,8 @@ class AppCore(JaaCore):
 
             # log request / response text
             if self.rest_log_params is not None and (self.rest_log_params.translate_resp_text or self.rest_log_params.translate_req_text):
-                log_source = "\nSource:\n" + req.text if self.rest_log_params.translate_req_text else ""
-                log_translate = "\nResult:\n" + translate_text if self.rest_log_params.translate_resp_text else ""
+                log_source = "\n\tSource:\n" + req.text if self.rest_log_params.translate_req_text else ""
+                log_translate = "\n\tResult:\n" + translate_text if self.rest_log_params.translate_resp_text else ""
                 logger.info(f"Translate text.{log_source}{log_translate}")
 
             return dto.TranslateResp(result=translate_text, parts=translate_parts, error=None)

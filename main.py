@@ -2,9 +2,9 @@ import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, Query
 from fastapi.exceptions import RequestValidationError
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, Response
 from starlette.staticfiles import StaticFiles
 
 from app import dto, log, cuda
@@ -167,6 +167,35 @@ async def translate_sugoi_like_post(text: str, from_lang: str = "", to_lang: str
     translate = core.translate(request)
 
     return dto.SugoiLikeGetResp(trans=translate.result)
+
+
+@app.get("/translate/xunity-autotranslator")
+async def translate_sugoi_like_post( text: str, from_lang: str = Query("", alias="from"), to: str = "",
+                                    context: str = None, translator_plugin: str = "") -> Response:
+    """
+    Translate text. Request and response for xunity-autotranslator - https://github.com/bbepis/XUnity.AutoTranslator
+
+    :param str text: text to translate.
+
+    :param str from_lang (from in Request Param - from is reserved word in python): from language (2 symbols, like "en").
+    May be empty (will be replaced to "default_from_lang" from options)
+
+    :param str to: to language (2 symbols, like "en").
+    May be empty (will be replaced to "default_to_lang" from options)
+
+    :param str context: additional context to translate (if model has context support)
+
+    :param str translator_plugin: plugin to use. If blank, default will be used.
+    If not initialized (not in "default_translate_plugin" and not in "init_on_start" from options - throw error)
+
+    :return: translated text string
+    """
+
+    request = dto.TranslateCommonRequest(text=text, context=context, from_lang=from_lang, to_lang=to,
+                                         translator_plugin=translator_plugin)
+    translate = core.translate(request)
+
+    return Response(content=translate.result, media_type="text/plain")
 
 
 @app.get("/process-files-list")

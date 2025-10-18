@@ -97,7 +97,7 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
         writer = utils.get_writer('srt', file_struct.path_out)
         writer(transcribe, out_file_name, {})
 
-        if options["translate_after_processing"]:
+        if options["translate_after_processing"] and req.from_lang != req.to_lang:
             return translate_after_processing(core=core, req=req, file_name_ext=out_file_name)
         else:
             return file_processor.get_processing_file_resp_ok(file_struct=file_struct, file_out=out_file_name)
