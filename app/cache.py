@@ -22,7 +22,7 @@ class Cache:
         self.init_delete_expired_values()
 
     def get_connection(self):
-        return sqlite3.connect(self.params.file)
+        return sqlite3.connect(self.params.file, timeout=30000)
 
     def init_pybase_migration(self):
         os.environ["PYWAY_TYPE"] = "sqlite"

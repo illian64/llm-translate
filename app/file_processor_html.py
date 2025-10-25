@@ -2,9 +2,8 @@ from typing import Iterator
 
 from bs4 import BeautifulSoup, PageElement, Tag
 
-from app import file_processor
+from app import file_processor, parallel_process, dto
 from app.app_core import AppCore
-from app.dto import ProcessingFileDirReq
 
 
 class FileProcessorHtml:
@@ -43,12 +42,15 @@ class FileProcessorHtml:
             original_element.append(additional_tag_element)
             return original_element
 
-    def process(self, req: ProcessingFileDirReq, soup: BeautifulSoup, body_tag: str = None) -> None:
+    def process_html(self, req: dto.ProcessingFileDirReq, soup: BeautifulSoup, body_tag, parallel: bool,
+                     gpu_count_for_parallel = None) -> None:
         translate_only_first_paragraphs: int = self.options.get("translate_only_first_paragraphs", 0)
         children: Iterator[PageElement] = soup.find(body_tag).descendants if body_tag else soup.descendants
         translated_paragraphs = 0
 
         all_original_text_items: list[str] = []
+
+        translate_params: list[dto.TranslateCommonRequest] = list()
 
         for child in children:
             if (child and child.text and child.parent and child.parent.get(self.attribute_source) is None
@@ -68,24 +70,39 @@ class FileProcessorHtml:
                     all_original_text_items.append(original_text)
 
                     translate_req = req.translate_req(text=original_text, context=context)
-                    translate_txt = self.core.translate(translate_req).result
-                    translated_paragraphs = translated_paragraphs + 1
-                    if 0 < translate_only_first_paragraphs <= translated_paragraphs:
-                        break
 
-                    if child_tag in self.text_tags:
-                        translate_element = self.get_translate_element(soup, child, translate_txt)
-                        if req.preserve_original_text:
-                            child.parent.insert_after(translate_element)
-                            original_element = self.get_original_element(soup, child, original_text)
-                            if original_element:
-                                child.replaceWith(original_element)
-                        else:
-                            child.replaceWith(translate_element)
+                    # if parallel - only fill params list, after that will be start async translate
+                    if parallel:
+                        translate_params.append(translate_req)
+                    else:
+                        translate_txt = self.core.translate(translate_req).result
+                        translated_paragraphs = translated_paragraphs + 1
+                        if 0 < translate_only_first_paragraphs <= translated_paragraphs:
+                            break
 
-                    elif child_tag in self.header_tags:
-                        if req.preserve_original_text:
-                            child.parent.string = f'{original_text}{self.header_delimiter}{translate_txt}'
-                        else:
-                            child.parent.string = translate_txt
+                        if child_tag in self.text_tags:
+                            translate_element = self.get_translate_element(soup, child, translate_txt)
+                            if req.preserve_original_text:
+                                child.parent.insert_after(translate_element)
+                                original_element = self.get_original_element(soup, child, original_text)
+                                if original_element:
+                                    child.replaceWith(original_element)
+                            else:
+                                child.replaceWith(translate_element)
 
+                        elif child_tag in self.header_tags:
+                            if req.preserve_original_text:
+                                child.parent.string = f'{original_text}{self.header_delimiter}{translate_txt}'
+                            else:
+                                child.parent.string = translate_txt
+
+        if parallel:
+            parallel_process.start_parallel_processing(gpu_count_for_parallel, self.core, translate_params)
+
+    def process(self, req: dto.ProcessingFileDirReq, soup: BeautifulSoup, body_tag: str = None) -> None:
+        gpu_count_for_parallel = parallel_process.translate_plugin_support_parallel_gpu_count(self.core, req.translator_plugin)
+        if gpu_count_for_parallel is not None:
+            # First pre-pass - translate without any actions, for fill cache. Next pass get translated text from cache.
+            self.process_html(req, soup, body_tag, True, gpu_count_for_parallel)
+
+        self.process_html(req, soup, body_tag, False)

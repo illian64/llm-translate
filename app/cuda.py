@@ -34,3 +34,7 @@ def get_device_with_gpu_num(options: dict) -> str:
         return "cuda:{0}".format(options["cuda_device_index"])
     else:
         return "cpu"
+
+
+def gpu_count() -> int:
+    return torch.cuda.device_count()

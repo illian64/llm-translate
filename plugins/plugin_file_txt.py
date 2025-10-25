@@ -1,8 +1,7 @@
 import os
 
-from app import file_processor, params
+from app import file_processor, params, parallel_process, dto
 from app.app_core import AppCore
-from app.dto import ProcessingFileDirReq, ProcessingFileResp, FileProcessingPluginInitInfo, ProcessingFileStruct
 
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 
@@ -43,11 +42,30 @@ def start_with_options(core: AppCore, manifest: dict):
     pass
 
 
-def init(core: AppCore) -> FileProcessingPluginInitInfo:
-    return FileProcessingPluginInitInfo(plugin_name=plugin_name, supported_extensions={"txt"})
+def init(core: AppCore) -> dto.FileProcessingPluginInitInfo:
+    return dto.FileProcessingPluginInitInfo(plugin_name=plugin_name, supported_extensions={"txt"})
 
 
-def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: ProcessingFileDirReq) -> ProcessingFileResp:
+def parallel_preprocessing(lines: list[str], core: AppCore, req: dto.ProcessingFileDirReq) -> None:
+    gpu_count_for_parallel = parallel_process.translate_plugin_support_parallel_gpu_count(core, req.translator_plugin)
+    if gpu_count_for_parallel is None:
+        return None
+
+    # First pre-pass - translate without any actions, for fill cache. Next pass get translated text from cache.
+    translate_params: list[dto.TranslateCommonRequest] = list()
+    all_original_text_items: list[str] = []
+    for line in lines:
+        if line != '':
+            context = file_processor.get_context(items_to_context=all_original_text_items,
+                                                 params=core.file_processing_params.context_params, translate_text=line)
+            translate_req = req.translate_req(line, context)
+            all_original_text_items.append(line)
+            translate_params.append(translate_req)
+
+    parallel_process.start_parallel_processing(gpu_count_for_parallel, core, translate_params)
+
+
+def file_processing(core: AppCore, file_struct: dto.ProcessingFileStruct, req: dto.ProcessingFileDirReq) -> dto.ProcessingFileResp:
     options = core.plugin_options(plugin_name)
     markdown_output: bool = options["markdown_output"]
     new_line_delimiter: str = options["new_line_delimiter"]
@@ -58,6 +76,9 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
     all_original_text_items: list[str] = []
     file_content = file_processor.read_file_with_fix_encoding(file_struct.path_file_in())
     lines: list[str] = file_content.splitlines()
+
+    parallel_preprocessing(lines, core, req)
+
     for line in lines:
         if line == '':
             result_lines.append(new_line_delimiter)
@@ -82,7 +103,7 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
     return file_processor.get_processing_file_resp_ok(file_struct=file_struct, file_out=out_file_name)
 
 
-def processed_file_name(core: AppCore, file_struct: ProcessingFileStruct, req: ProcessingFileDirReq) -> str:
+def processed_file_name(core: AppCore, file_struct: dto.ProcessingFileStruct, req: dto.ProcessingFileDirReq) -> str:
     options = core.plugin_options(plugin_name)
     ext = "md" if options["markdown_output"] else None
 
