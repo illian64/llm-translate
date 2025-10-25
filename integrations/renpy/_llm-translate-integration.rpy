@@ -1,12 +1,13 @@
 init 99 python:
     import sys
+    import requests
 
     #--------------------------------------------------------------------------
     # Configuration variables
     #--------------------------------------------------------------------------
     llm_translate__translate_path = "http://127.0.0.1:4990/translate"
     llm_translate__preserve_original_text = True
-    llm_translate__translate_text_all = False # not recommended
+    llm_translate__translate_text_all = False # recommended False
     llm_translate__translate_font_name = "DejaVuSans.ttf"
     llm_translate__translate_font_size = 22
     llm_translate__translate_font_format_tag = "i"
@@ -35,7 +36,6 @@ init 99 python:
         return s[0]
 
 
-    #
     def llm_translate__preprocess_text(src):
         """
         Preprocess text - remove tags, fill variables values
@@ -50,7 +50,7 @@ init 99 python:
             s = s.replace("{p}", "\n")
 
         s = llm_translate__fill_variables_values(s)
-        s = renpy.translation.dialogue.notags_filter(s) #remove tags {}
+        s = renpy.translation.dialogue.notags_filter(s) # remove tags {}
 
         return s
 
@@ -78,7 +78,6 @@ init 99 python:
         :param s: preprocessed text
         :return: translate result
         """
-        import requests
         req = {
             "text": s,
             "llm_translate__from_lang": llm_translate__from_lang,
@@ -102,7 +101,7 @@ init 99 python:
         else:
             return resp["error"]
 
-    #
+
     def llm_translate__translate_text(src):
         """
         Main function to translate
@@ -119,20 +118,22 @@ init 99 python:
         if s is None or s == "":
             return src
     
-        dict_translated_value = llm_translate__translated_text_dict.get(s, None)
-        if dict_translated_value is None:
+        translate_result = llm_translate__translated_text_dict.get(s, None)
+        if translate_result is None:
             translate_result = llm_translate__request_python_v3(src, s)
-
             llm_translate__translated_text_dict[s] = translate_result
-        else:
-            return dict_translated_value
 
-    # enable or disable translate
+        return translate_result
+
+
     def llm_translate__toggle_translate():
+        """
+        Toggle translate button listener
+        """
         global llm_translate__translate_toggle_value
-        value = not llm_translate__translate_toggle_value
-        llm_translate__translate_toggle_value = value
-        if not value: #clear cache
+        toggle_value = not llm_translate__translate_toggle_value
+        llm_translate__translate_toggle_value = toggle_value
+        if not toggle_value: #clear cache
             llm_translate__translated_text_dict.clear()
     
     # apply replace text
@@ -140,11 +141,6 @@ init 99 python:
         config.replace_text = llm_translate__translate_text
     else:
         config.say_menu_text_filter = llm_translate__translate_text
-
-
-    # translate request with module requests - for python v3
-    def llm_translate__request_python_v2(src, s):
-        return src
 
 
 # button to enable or disable translate
