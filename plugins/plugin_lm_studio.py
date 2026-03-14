@@ -103,10 +103,19 @@ def init(core: AppCore) -> TranslatePluginInitInfo:
         else:
             # if disabled parallel_processing, check loaded models and get name, if found
             loaded_models = lmstudio.list_loaded_models("llm")
-            if len(loaded_models) > 0:  # found loaded model - use it
-                llm_model_name = loaded_models[0].identifier
-                llm_model_list_names.append(llm_model_name)
-                model_name = llm_model_name.lower()
+
+            if options['use_library']['model'] != "": # found model name in params. need to check load status
+                model_param = [model for model in loaded_models if model.identifier == options['use_library']['model']]
+                if len(model_param) == 1: # model name is unique in LLM studio, found loaded model from params
+                    llm_model_name = model_param[0].identifier
+                    llm_model_list_names.append(llm_model_name)
+                    model_name = llm_model_name.lower()
+                else:
+                    model_name = options['use_library']['model']
+                    client = lmstudio.get_default_client()
+                    config = LlmLoadModelConfig(context_length=options["use_library"]["model_context_length"])
+                    logger.info("LM Studio load model: " + model_name)
+                    client.llm.load_new_instance(model_name, model_name, config=config, ttl=None)
             elif options['use_library']['model'] != "":  # loaded model not found - try to load
                 model_name = options['use_library']['model']
                 client = lmstudio.get_default_client()
