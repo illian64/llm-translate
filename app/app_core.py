@@ -156,8 +156,8 @@ class AppCore(JaaCore):
             if translate_struct.need_to_translate():
                 translate_struct: dto.TranslateStruct = self.translators[req.translator_plugin][1](self, translate_struct)
                 self.cache.cache_write(req, translate_struct.parts, self.cache_params, plugin_info.model_name)
-                if self.get_translation_params(plugin_info.plugin_name).sleep_after_translate > 0:
-                    time.sleep(self.get_translation_params(plugin_info.plugin_name).sleep_after_translate)
+                if self.get_translation_params(plugin_info.plugin_name).sleep_after_translate_sec > 0:
+                    time.sleep(self.get_translation_params(plugin_info.plugin_name).sleep_after_translate_sec)
 
             (translate_text, translate_parts) = text_splitter.join_text(translate_struct.parts)
 

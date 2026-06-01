@@ -14,7 +14,7 @@ manifest = {
         "translation_params": {
             "default_from_lang": "en",  # default from language
             "default_to_lang": "ru",  # default to language
-            "sleep_after_translate": 0,  # delay after translate (in seconds, may be decimal, for example 0.1 for 100 ms), if you GPU too hot
+            "sleep_after_translate_sec": 0,  # delay after translate (in seconds, may be decimal, for example 0.1 for 100 ms), if you GPU too hot
         },
 
         "text_split_params": {
@@ -49,6 +49,7 @@ manifest = {
 
             "remove_multiple_spaces": True, # replace two or more space to one
             "replace_text_from_to": {  # additional replace variants, from : to
+                "\n<|file_separator|>": ""
             },
         },
 

@@ -39,7 +39,8 @@ def start(core: AppCore):
                 "enabled_gpu_numbers": [0, 1]
             },
             "special_prompt_for_model": {
-                "my_model_name": "special prompt"
+                "my_model_name": "special prompt",
+                "translategemma-4b-it": "<<<source>>>%%from_lang_code%%<<<target>>>%%to_lang_code%%<<<text>>>"
             },
         },
 
@@ -104,24 +105,22 @@ def init(core: AppCore) -> TranslatePluginInitInfo:
             # if disabled parallel_processing, check loaded models and get name, if found
             loaded_models = lmstudio.list_loaded_models("llm")
 
-            if options['use_library']['model'] != "": # found model name in params. need to check load status
-                model_param = [model for model in loaded_models if model.identifier == options['use_library']['model']]
+            config_model_name: str = options['use_library']['model']
+            if config_model_name != "": # found model name in params. need to check load status
+                model_param = [model for model in loaded_models if model.identifier == config_model_name]
+                model_name = config_model_name.lower()
                 if len(model_param) == 1: # model name is unique in LLM studio, found loaded model from params
                     llm_model_name = model_param[0].identifier
                     llm_model_list_names.append(llm_model_name)
-                    model_name = llm_model_name.lower()
                 else:
-                    model_name = options['use_library']['model']
                     client = lmstudio.get_default_client()
                     config = LlmLoadModelConfig(context_length=options["use_library"]["model_context_length"])
-                    logger.info("LM Studio load model: " + model_name)
-                    client.llm.load_new_instance(model_name, model_name, config=config, ttl=None)
-            elif options['use_library']['model'] != "":  # loaded model not found - try to load
-                model_name = options['use_library']['model']
-                client = lmstudio.get_default_client()
-                config = LlmLoadModelConfig(context_length=options["use_library"]["model_context_length"])
-                logger.info("LM Studio load model: " + model_name)
-                client.llm.load_new_instance(model_name, model_name, config=config, ttl=None)
+                    logger.info("LM Studio load model: " + config_model_name)
+                    client.llm.load_new_instance(config_model_name, config_model_name, config=config, ttl=None)
+            elif len(loaded_models) > 0:  # found loaded model - use it
+                llm_model_name = loaded_models[0].identifier
+                llm_model_list_names.append(llm_model_name)
+                model_name = llm_model_name.lower()
             else:  # loaded model not found - and not model to load - error
                 raise ValueError('List loaded models is empty. Please load model before init this plugin')
     else:
@@ -144,8 +143,10 @@ def translate(core: AppCore, ts: TranslateStruct) -> TranslateStruct:
     special_prompt_for_model: str | None = options["special_prompt_for_model"].get(model_name)
     prompt_param = special_prompt_for_model if special_prompt_for_model else options["prompt"]
 
-    prompt = translate_func.generate_prompt(prompt_param=prompt_param, from_lang_name=from_lang_name,
-                                            to_lang_name=to_lang_name, postfix_param=options["prompt_postfix"],
+    prompt = translate_func.generate_prompt(prompt_param=prompt_param,
+                                            from_lang_name=from_lang_name, to_lang_name=to_lang_name,
+                                            from_lang_code=ts.req.from_lang, to_lang_code=ts.req.to_lang,
+                                            postfix_param=options["prompt_postfix"],
                                             prompt_no_think_postfix_param=options['prompt_no_think_postfix'],
                                             context=ts.req.context, )
     use_library_for_request = options["use_library"]["enabled"]

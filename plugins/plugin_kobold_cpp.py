@@ -60,8 +60,10 @@ def translate(core: AppCore, ts: TranslateStruct):
     special_prompt_for_model: str | None = options["special_prompt_for_model"].get(model_name)
     prompt_param = special_prompt_for_model if special_prompt_for_model else options["prompt"]
 
-    prompt = translate_func.generate_prompt(prompt_param=prompt_param, from_lang_name=from_lang_name,
-                                            to_lang_name=to_lang_name, postfix_param=options["prompt_postfix"],
+    prompt = translate_func.generate_prompt(prompt_param=prompt_param,
+                                            from_lang_name=from_lang_name, to_lang_name=to_lang_name,
+                                            from_lang_code=ts.req.from_lang, to_lang_code=ts.req.to_lang,
+                                            postfix_param=options["prompt_postfix"],
                                             prompt_no_think_postfix_param=options['prompt_no_think_postfix'],
                                             context=ts.req.context)
 

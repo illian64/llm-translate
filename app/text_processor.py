@@ -1,5 +1,7 @@
 import re
 
+import regex
+
 from app import log
 from app.params import TextProcessParams
 
@@ -51,8 +53,8 @@ def replace_non_standard_new_lines_chars(text: str) -> str:
 
 def remove_identical_characters(text, remove_identical_characters_max_repeats):
     # Удаляет символы, повторяющиеся более max_repeats раз
-    pattern = r'([^\d])\1{' + str(remove_identical_characters_max_repeats) + ',}'
-    return re.sub(pattern, r'\1' * remove_identical_characters_max_repeats, text)
+    pattern = r'(\p{L})\1{' + str(remove_identical_characters_max_repeats) + ',}'
+    return regex.sub(pattern, r'\1' * remove_identical_characters_max_repeats, text)
 
 
 def remove_multiple_spaces(text: str) -> str:

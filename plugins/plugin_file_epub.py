@@ -65,7 +65,7 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
     docs_count = 0
     for item in book.get_items():
         if item.get_type() == ebooklib.ITEM_DOCUMENT:
-            book_documents_ids.append(item.id)
+            book_documents_ids.append(item.file_name)
             docs_count = docs_count + 1
 
     book_documents_ids_set: set[str]
@@ -78,7 +78,7 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
     processed_count = 0
     log_limit_info = f"(limit: {translate_only_first_chapters_amount})" if translate_only_first_chapters_amount > 0 else ""
     for item in book.get_items():
-        if item.get_type() == ebooklib.ITEM_DOCUMENT and item.id in book_documents_ids_set:
+        if item.get_type() == ebooklib.ITEM_DOCUMENT and item.file_name in book_documents_ids_set:
             processed_count = processed_count + 1
             logger.info("Translate file %s, item with id %s, item %s / %s %s",
                         file_struct.file_name_ext, item.get_id(), processed_count, docs_count, log_limit_info)
