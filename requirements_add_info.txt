@@ -6,3 +6,7 @@ For launch in portablesource
 cd /d "%repo_path%"
 "%python_exe%" -m pip install -r requirements.txt
 "%python_exe%" app.py
+
+venv\Scripts\activate
+
+pip install --force-reinstall -v "package==1.1"

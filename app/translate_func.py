@@ -1,8 +1,10 @@
 import requests
 
-def generate_prompt(prompt_param: str, from_lang_name: str, to_lang_name: str,
+def generate_prompt(prompt_param: str, from_lang_name: str, to_lang_name: str, from_lang_code, to_lang_code,
                     postfix_param: str, prompt_no_think_postfix_param: bool, context: str) -> str:
-    prompt = prompt_param.replace("%%from_lang%%", from_lang_name).replace("%%to_lang%%", to_lang_name)
+    prompt = (prompt_param.replace("%%from_lang%%", from_lang_name).replace("%%to_lang%%", to_lang_name)
+              .replace("%%from_lang_code%%", from_lang_code).replace("%%to_lang_code%%", to_lang_code))
+
     if context and len(context.strip()) > 0:
         prompt = prompt.replace("%%context_prompt%%", context)
     else:

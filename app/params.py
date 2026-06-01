@@ -5,7 +5,7 @@ from dataclasses import dataclass
 class TranslationParams:
     default_from_lang: str
     default_to_lang: str
-    sleep_after_translate: float
+    sleep_after_translate_sec: float
 
 @dataclass
 class TextSplitParams:
@@ -117,7 +117,7 @@ def read_translation_params(manifest: dict) -> TranslationParams | None:
     return TranslationParams(
         default_from_lang=options["translation_params"]["default_from_lang"],
         default_to_lang=options["translation_params"]["default_to_lang"],
-        sleep_after_translate=options["translation_params"].get("sleep_after_translate", 0),
+        sleep_after_translate_sec=options["translation_params"].get("sleep_after_translate_sec", 0)
     )
 
 

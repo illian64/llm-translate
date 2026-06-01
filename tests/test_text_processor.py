@@ -26,6 +26,10 @@ class TextProcessorTest(TestCase):
         processed = text_processor.remove_identical_characters(text, 3)
         self.assertEqual("sooome texttt оёёё 12222223 qÖÖÖöööwe こここ 00000", processed)
 
+        text = ".... **** ---- #### !!!!"
+        processed = text_processor.remove_identical_characters(text, 3)
+        self.assertEqual(text, processed)
+
         text = "soooooome textttttt оёёёёёёё 12222223 qÖÖÖÖÖÖöööööwe こここここ 00000"
         processed = text_processor.remove_identical_characters(text, 4)
         self.assertEqual("soooome textttt оёёёё 12222223 qÖÖÖÖööööwe ここここ 00000", processed)
