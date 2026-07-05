@@ -20,6 +20,6 @@ COPY resources ./resources
 
 EXPOSE 4990
 
-RUN mkdir -p /app/files_processing/in && mkdir -p /app/files_processing/out && mkdir -p /app/models && mkdir -p /app/options
+RUN mkdir -p /app/files_processing/in && mkdir -p /app/files_processing/out && mkdir -p /app/models && mkdir -p /app/options && mkdir -p /app/external_prompt
 
 CMD ["./venv/bin/python3", "-m", "uvicorn", "main:app", "--host=0.0.0.0", "--port=4990", "--log-level=info", "--log-config=resources/log_config.yaml"]

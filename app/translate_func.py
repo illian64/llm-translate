@@ -1,4 +1,7 @@
+from pathlib import Path
+
 import requests
+
 
 def generate_prompt(prompt_param: str, from_lang_name: str, to_lang_name: str, from_lang_code, to_lang_code,
                     postfix_param: str, prompt_no_think_postfix_param: bool, context: str) -> str:
@@ -40,3 +43,17 @@ def post_request(req: dict, url: str):
 
 def remove_think_text(text: str) -> str:
     return text.replace("<think>\n\n</think>\n\n", "").strip()
+
+
+def get_prompt_param_with_external_prompt_support(prompt_param: str) -> str:
+    if prompt_param:
+        prompt_param_lower = prompt_param.lower()
+        if prompt_param_lower.endswith(".json") or prompt_param_lower.endswith(".txt"):
+            current_dir: Path = Path(__file__).parent.absolute()
+            json_path = current_dir / ".." / "external_prompt" / prompt_param_lower
+            if Path.exists(json_path):
+                return json_path.read_text()
+            else:
+                raise ValueError(f'Expected json file in path "{json_path}"')
+
+    return prompt_param

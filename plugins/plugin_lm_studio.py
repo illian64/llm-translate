@@ -14,6 +14,7 @@ from app.lang_dict import get_lang_by_2_chars_code
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 llm_model_list_names: list[str] = []
 model_name: str = ""
+prompt_param: str = ""
 logger = log.logger()
 
 executor: ThreadPoolExecutor
@@ -131,6 +132,12 @@ def init(core: AppCore) -> TranslatePluginInitInfo:
 
         model_name = model_name = resp["model"].lower()
 
+    #init prompt_param
+    global prompt_param
+    special_prompt_for_model: str | None = options["special_prompt_for_model"].get(model_name)
+    prompt_param = translate_func.get_prompt_param_with_external_prompt_support(
+        special_prompt_for_model if special_prompt_for_model else options["prompt"])
+
     return TranslatePluginInitInfo(plugin_name=plugin_name, model_name=model_name)
 
 
@@ -139,9 +146,6 @@ def translate(core: AppCore, ts: TranslateStruct) -> TranslateStruct:
 
     from_lang_name = get_lang_by_2_chars_code(ts.req.from_lang)
     to_lang_name = get_lang_by_2_chars_code(ts.req.to_lang)
-
-    special_prompt_for_model: str | None = options["special_prompt_for_model"].get(model_name)
-    prompt_param = special_prompt_for_model if special_prompt_for_model else options["prompt"]
 
     prompt = translate_func.generate_prompt(prompt_param=prompt_param,
                                             from_lang_name=from_lang_name, to_lang_name=to_lang_name,

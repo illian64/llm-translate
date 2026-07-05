@@ -67,6 +67,8 @@ class FileProcessorHtml:
 
         uniq_text_set: set[str] = set()
         for child in children_list:
+            if child is None or child.parent is None:
+                continue
             child_tag = child.parent.name
             if child.parent.get(self.attribute_translate) is None and child.parent.get(self.attribute_source) is None:
                 # get contents - for example <p><b>1</b>2<i>3</i><p> - 3 items. 1, 3 - tags, 2 - simple string
