@@ -22,13 +22,15 @@ def get_prompt_postfix(postfix_param: str, prompt_no_think_postfix_param: bool) 
     return postfix_param + " /no_think" if prompt_no_think_postfix_param else ""
 
 
-def get_open_ai_request(prompt: str, text: str) -> dict:
+def get_open_ai_request(prompt: str, text: str, max_tokens_multiplier: int) -> dict:
+    # max_tokens - Sometimes model can "breaks" and generate tokens indefinitely. This parameter limits generation.
     return {
         "messages": [
             {"role": "system", "content": prompt},
             {"role": "user", "content": text}
         ],
-        "temperature": 0.0
+        "temperature": 0.0,
+        "max_tokens": len(text) * max_tokens_multiplier
     }
 
 

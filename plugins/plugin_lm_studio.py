@@ -23,7 +23,7 @@ executor: ThreadPoolExecutor
 def start(core: AppCore):
     manifest = {
         "name": "LM-Studio Translator",  # name
-        "version": "1.0",  # version
+        "version": "1.1",  # version
 
         "default_options": {
             "custom_url": "http://localhost:1234",  #
@@ -43,6 +43,7 @@ def start(core: AppCore):
                 "my_model_name": "special prompt",
                 "translategemma-4b-it": "<<<source>>>%%from_lang_code%%<<<target>>>%%to_lang_code%%<<<text>>>"
             },
+            "max_tokens_multiplier": 3,
         },
 
         "translate": {
@@ -127,7 +128,7 @@ def init(core: AppCore) -> TranslatePluginInitInfo:
     else:
         postfix = translate_func.get_prompt_postfix(options["prompt_postfix"], options['prompt_no_think_postfix'])
         prompt = "You are assistant. " + postfix
-        req = translate_func.get_open_ai_request(prompt, "init")
+        req = translate_func.get_open_ai_request(prompt, "init", options["max_tokens_multiplier"])
         resp = translate_func.post_request(req, options['custom_url'] + "/v1/chat/completions")
 
         model_name = model_name = resp["model"].lower()
@@ -158,20 +159,23 @@ def translate(core: AppCore, ts: TranslateStruct) -> TranslateStruct:
     parallel_process_enabled: bool = (use_library_for_request and options['parallel_processing']["enabled"]
                                       and parallel_process.is_main_thread())
 
+    max_tokens_multiplier: int = options["max_tokens_multiplier"]
     if parallel_process_enabled:
         # first pass - prepare lists of params
         params_prompt: list[str] = list()
         params_text: list[str] = list()
         params_part_num: list[int] = list()
+        max_tokens_multipliers: list[int] = list()
         for part_num, part in enumerate(ts.parts):
             if part.need_to_translate():
                 params_prompt.append(prompt)
                 params_text.append(part.text)
                 params_part_num.append(part_num)
+                max_tokens_multipliers.append(max_tokens_multiplier)
 
         # second pass - async execute and get list of results
         async_results: list[parallel_process.AsyncResult] = list(tqdm(executor.map(
-            library_request, params_prompt, params_text, params_part_num), total=len(ts.parts),
+            library_request, params_prompt, params_text, max_tokens_multipliers, params_part_num), total=len(ts.parts),
             unit=params.tp.unit, ascii=params.tp.ascii, desc=params.tp.desc))
 
         # third pass - set translate to part by part_num
@@ -182,9 +186,9 @@ def translate(core: AppCore, ts: TranslateStruct) -> TranslateStruct:
             if part.need_to_translate():
                 content: str
             if use_library_for_request:
-                content = library_request(prompt, part.text).content
+                content = library_request(prompt, part.text, max_tokens_multiplier).content
             else:
-                req = translate_func.get_open_ai_request(prompt, part.text)
+                req = translate_func.get_open_ai_request(prompt, part.text, max_tokens_multiplier)
                 resp = translate_func.post_request(req, options['custom_url'] + "/v1/chat/completions")
                 content = resp["choices"][0]['message']['content']
 
@@ -193,7 +197,7 @@ def translate(core: AppCore, ts: TranslateStruct) -> TranslateStruct:
     return ts
 
 
-def library_request(prompt: str, text: str, part_num: int = 0) -> parallel_process.AsyncResult:
+def library_request(prompt: str, text: str, max_tokens_multiplier: int, part_num: int = 0) -> parallel_process.AsyncResult:
     # print(f"pid {os.getpid()} ({multiprocessing.current_process().name}) thread: {threading.current_thread().name}")
 
     thread_num = parallel_process.thread_num()
@@ -204,6 +208,8 @@ def library_request(prompt: str, text: str, part_num: int = 0) -> parallel_proce
 
     chat = lmstudio.Chat(prompt)
     chat.add_user_message(text)
-    result = model.respond(chat, config=LlmPredictionConfig(temperature=0.0))
+    # max_tokens - Sometimes model can "breaks" and generate tokens indefinitely. This parameter limits generation.
+    config = LlmPredictionConfig(temperature=0.0, max_tokens=len(text) * max_tokens_multiplier)
+    result = model.respond(chat, config=config)
 
     return parallel_process.AsyncResult(content=result.content, model=model.identifier, part_num=part_num)

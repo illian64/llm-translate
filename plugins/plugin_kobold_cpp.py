@@ -17,7 +17,7 @@ prompt_param: str = ""
 def start(core: AppCore):
     manifest = {  # plugin settings
         "name": "KoboldCpp Translator",  # name
-        "version": "1.0",  # version
+        "version": "1.1",  # version
 
         "default_options": {
             "custom_url": "http://127.0.0.1:5001",  #
@@ -27,6 +27,7 @@ def start(core: AppCore):
             "special_prompt_for_model": {
                 "my_model_name": "special prompt"
             },
+            "max_tokens_multiplier": 3,
         },
         "translate": {
             "kobold_cpp": (init, translate)  # 1 function - init, 2 - translate
@@ -60,6 +61,7 @@ def init(core: AppCore) -> TranslatePluginInitInfo:
 
 def translate(core: AppCore, ts: TranslateStruct):
     options = core.plugin_options(plugin_name)
+    max_tokens_multiplier: int = options["max_tokens_multiplier"]
 
     from_lang_name: str = get_lang_by_2_chars_code(ts.req.from_lang)
     to_lang_name: str = get_lang_by_2_chars_code(ts.req.to_lang)
@@ -73,7 +75,7 @@ def translate(core: AppCore, ts: TranslateStruct):
 
     for part in tqdm(ts.parts, unit=params.tp.unit, ascii=params.tp.ascii, desc=params.tp.desc):
         if part.need_to_translate():
-            req = translate_func.get_open_ai_request(prompt, part.text)
+            req = translate_func.get_open_ai_request(prompt, part.text, max_tokens_multiplier)
             req["model"] = "kcpp"
 
             resp = translate_func.post_request(req, options['custom_url'] + "/v1/chat/completions")
