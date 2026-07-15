@@ -79,7 +79,8 @@ class FileProcessorHtml:
                 context = file_processor.get_context(items_to_context=all_original_text_items,
                                                      params=self.context_params, translate_text=original_text)
 
-                all_original_text_items.append(original_text)
+                if original_text not in all_original_text_items:
+                    all_original_text_items.append(original_text)
 
                 translate_req = req.translate_req(text=original_text, context=context)
 
