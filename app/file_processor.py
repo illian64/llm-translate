@@ -124,6 +124,9 @@ def get_context(items_to_context: list[str], params: FileProcessingContextParams
             strip_item = item.strip()
             add_anyway = len(result_list) == 0 and params.include_at_least_one_paragraph
             if add_anyway or (len(strip_item) + result_list_context_length <= params.expected_length):
+                if strip_item in result_list:
+                    continue
+
                 result_list.insert(0, strip_item)
                 result_list_context_length += len(strip_item)
             else:
