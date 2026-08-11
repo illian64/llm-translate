@@ -2,7 +2,7 @@ import os
 from concurrent.futures import ThreadPoolExecutor
 
 import lmstudio
-from lmstudio import LlmPredictionConfig, LlmLoadModelConfig
+from lmstudio import LlmPredictionConfig, LlmLoadModelConfig, LLM
 from lmstudio._sdk_models import GpuSetting
 from tqdm import tqdm
 
@@ -13,6 +13,7 @@ from app.lang_dict import get_lang_by_2_chars_code
 
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 llm_model_list_names: list[str] = []
+llm_model_names_to_models: dict[str, LLM] = {}
 model_name: str = ""
 prompt_param: str = ""
 logger = log.logger()
@@ -201,10 +202,16 @@ def library_request(prompt: str, text: str, max_tokens_multiplier: int, part_num
     # print(f"pid {os.getpid()} ({multiprocessing.current_process().name}) thread: {threading.current_thread().name}")
 
     thread_num = parallel_process.thread_num()
+    model_name_req: str
     if thread_num is None:
-        model = lmstudio.llm(model_name)
+        model_name_req = model_name
     else:
-        model = lmstudio.llm(llm_model_list_names[thread_num])
+        model_name_req = llm_model_list_names[thread_num]
+
+    # check lm-studio LLM in cache map - get or request and get
+    if llm_model_names_to_models.get(model_name_req) is None:
+        llm_model_names_to_models[model_name_req] = lmstudio.llm(model_name_req)
+    model: LLM = llm_model_names_to_models[model_name_req]
 
     chat = lmstudio.Chat(prompt)
     chat.add_user_message(text)
