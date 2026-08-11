@@ -67,10 +67,10 @@ def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: Proce
         if item.get_type() == ebooklib.ITEM_DOCUMENT:
             book_documents_ids.append(item.file_name)
             docs_count = docs_count + 1
+    book_documents_ids = os_sorted(book_documents_ids)
 
     book_documents_ids_set: set[str]
     if translate_only_first_chapters_amount > 0:
-        book_documents_ids = os_sorted(book_documents_ids)
         book_documents_ids_set = set(book_documents_ids[:translate_only_first_chapters_amount])
     else:
         book_documents_ids_set = set(book_documents_ids)
