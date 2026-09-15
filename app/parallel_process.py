@@ -61,7 +61,7 @@ def start_parallel_processing(gpu_count_for_parallel: int, core: AppCore,
     with ThreadPoolExecutor(max_workers=gpu_count_for_parallel,
                             thread_name_prefix=executor_file_processing_prefix) as executor:
         async_results: list[dto.TranslateResp] = list(executor.map(core.translate, translate_params))
-        logger.info("Finish preprocess parallel task. Requests: " + str(len(async_results)))
+        logger.debug("Finish preprocess parallel task. Requests: " + str(len(async_results)))
 
         return async_results
 

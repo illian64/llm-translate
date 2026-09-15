@@ -8,7 +8,7 @@ from natsort import os_sorted
 from app import file_processor, log
 from app.app_core import AppCore
 from app.dto import ProcessingFileDirReq, ProcessingFileResp, FileProcessingPluginInitInfo, ProcessingFileStruct
-from app.file_processor_html import FileProcessorHtml
+from app.file_html_processor import FileHtmlProcessor
 
 plugin_name = os.path.basename(__file__)[:-3]  # calculating modname
 logger = log.logger()
@@ -57,7 +57,7 @@ def init(core: AppCore) -> FileProcessingPluginInitInfo:
 def file_processing(core: AppCore, file_struct: ProcessingFileStruct, req: ProcessingFileDirReq) -> ProcessingFileResp:
     options = core.plugin_options(plugin_name)
     translate_only_first_chapters_amount: int = options["translate_only_first_chapters_amount"]
-    html_processor = FileProcessorHtml(core=core, options=options)
+    html_processor = FileHtmlProcessor(core=core, options=options)
     book_documents_ids: list[str] = []
 
     book = epub.read_epub(file_struct.path_file_in())
