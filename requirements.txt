@@ -25,4 +25,4 @@ pysbd == 0.3.4
 lmstudio == 1.4.1
 
 ebooklib == 0.19
-beautifulsoup4  == 4.13.4
+beautifulsoup4 == 4.13.4
